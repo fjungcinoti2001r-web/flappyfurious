@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>火遮眼：怒火突围（双BGM自动切换终极版）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Teko:wght@600;700&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #05070d; overflow: hidden; }
+        .pixel-font { font-family: 'Press Start 2P', monospace; }
+        ::-webkit-scrollbar { display: none; }
+        body { background: #050908; color: #d5dfd6; }
+        
+        #game-container {
+            background: #07100f;
+            border-color: #263b35;
+            box-shadow: 0 0 55px rgba(22, 65, 58, .38), inset 0 0 70px rgba(0, 0, 0, .72);
+        }
+
+        /* 严格对齐参考图的电影级斜向光影暗绿背景与排版 */
+        #lobby-view {
+            background: 
+                linear-gradient(135deg, rgba(25, 60, 52, 0.45) 0%, rgba(6, 20, 18, 0.9) 100%),
+                radial-gradient(ellipse at top right, rgba(40, 95, 80, 0.35), transparent 60%) !important;
+            background-color: #0a1c18 !important;
+            padding: 18px !important;
+        }
+
+        .title-flappy {
+            font-family: 'Teko', sans-serif;
+            font-size: 4.8rem;
+            line-height: 0.85;
+            font-weight: 700;
+            color: #e52c24;
+            text-shadow: 3px 3px 0px #030807, 0 0 20px rgba(229, 44, 36, 0.4);
+            letter-spacing: 2px;
+            font-style: italic;
+        }
+
+        .title-furious {
+            font-family: 'Teko', sans-serif;
+            font-size: 5.2rem;
+            line-height: 0.9;
+            font-weight: 700;
+            background: linear-gradient(180deg, #e52c24 0%, #f59e0b 55%, #fde047 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 4px 4px 0px #020505;
+            letter-spacing: 2px;
+            font-style: italic;
+        }
+
+        .screen-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        /* 仅调整选人大厅，其他页面和游戏逻辑保持不变 */
+        #lobby-view {
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 24px 18px 18px !important;
+            background:
+                linear-gradient(148deg, transparent 0 34%, rgba(42, 93, 84, .42) 34.2% 53%, transparent 53.2%),
+                linear-gradient(180deg, #09221f 0%, #0a2925 48%, #031412 100%) !important;
+            overflow: hidden;
+        }
+        #lobby-view { overflow-y: auto; }
+        #lobby-view > #btn-start-game { position: sticky; bottom: 0; z-index: 4; flex: 0 0 auto; margin-top: auto; }
+        @media (max-height: 760px) {
+            #lobby-view { gap: 5px; padding: 12px 14px 10px !important; }
+            #lobby-view > .text-center { margin: 6px 0 8px !important; }
+            #lobby-view .title-flappy { font-size: clamp(3rem, 13vw, 4.2rem); }
+            #lobby-view .title-furious { font-size: clamp(3.2rem, 14vw, 4.7rem); }
+            #lobby-view > .text-center p { margin-top: 3px !important; }
+            #lobby-view > .relative.w-full { margin-bottom: 6px !important; padding: 9px 10px !important; border-radius: 18px !important; }
+            #lobby-view .relative.w-full > .flex.items-center.justify-between { margin-bottom: 3px !important; }
+            #lobby-view #char-preview-canvas { width: 72px; height: 72px; }
+            #lobby-view .relative.w-24 { width: 72px; height: 72px; margin-bottom: 3px !important; }
+            #lobby-view #char-style { margin-top: 1px !important; font-size: 10px; line-height: 1.25; }
+            #lobby-view .char-help { margin-top: 5px; padding: 5px 7px; font-size: 9px; line-height: 1.3; }
+            #lobby-view .scene-picker { margin-top: 5px; padding: 5px 7px; font-size: 10px; }
+            #lobby-view #btn-start-game { min-height: 48px; padding-top: 9px; padding-bottom: 9px; font-size: 16px !important; }
+        }
+        #lobby-view::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 0 45%, rgba(1, 8, 8, .28) 100%);
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 18% 78%, rgba(239, 68, 20, .13), transparent 28%),
+                linear-gradient(180deg, transparent 0 45%, rgba(1, 8, 8, .28) 100%);
+            background-size: 160% 160%, 100% 100%;
+            animation: lobby-fire-drift 9s ease-in-out infinite alternate;
+        }
+        @keyframes lobby-fire-drift {
+            0% { background-position: 0% 70%, 0 0; opacity: .72; }
+            100% { background-position: 100% 30%, 0 0; opacity: 1; }
+        }
+        @keyframes lobby-flame-title {
+            0%, 100% { background-position: 0% 50%; filter: drop-shadow(0 0 4px rgba(239, 68, 36, .22)); }
+            50% { background-position: 100% 50%; filter: drop-shadow(0 0 13px rgba(255, 170, 45, .48)); }
+        }
+        #lobby-view > * { position: relative; z-index: 1; }
+        #lobby-view > .text-center {
+            margin: 26px 0 34px !important;
+            padding: 0 !important;
+        }
+        #lobby-view .title-flappy,
+        #lobby-view .title-furious {
+            font-size: clamp(3.7rem, 15vw, 5.3rem);
+            line-height: .82;
+            letter-spacing: 1px;
+            text-shadow: 3px 4px 0 #08100f, 0 0 12px rgba(238, 54, 27, .28);
+        }
+        #lobby-view .title-flappy {
+            color: #e52c24;
+            background: none;
+            -webkit-text-fill-color: #e52c24;
+            animation: none;
+            text-shadow: 3px 3px 0 #030807, 0 0 20px rgba(229, 44, 36, .4);
+        }
+        #lobby-view .title-furious {
+            display: block;
+            font-size: clamp(4rem, 16vw, 5.6rem);
+            background: linear-gradient(115deg, #b41d19 0%, #ff4826 28%, #ffc43d 50%, #ef3922 73%, #8e1516 100%);
+            background-size: 230% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 3px 4px 0 #08100f;
+            animation: lobby-flame-title 2.8s ease-in-out infinite reverse;
+        }
+        #lobby-view > .relative.w-full {
+            margin: 0 0 20px !important;
+            padding: 16px !important;
+            border-radius: 24px !important;
+            background: rgba(3, 27, 25, .72) !important;
+            border-color: rgba(130, 200, 183, .55) !important;
+            box-shadow: none !important;
+        }
+        #lobby-view #char-preview-canvas {
+            border-radius: 18px !important;
+            border-color: rgba(137, 211, 191, .56) !important;
+        }
+        #lobby-view #btn-char-prev,
+        #lobby-view #btn-char-next {
+            width: 36px; height: 36px;
+            border-radius: 4px !important;
+            background: #12283a !important;
+            color: #d8e9ed !important;
+        }
+        #lobby-view #btn-start-game {
+            min-height: 62px;
+            border-radius: 4px !important;
+            background: linear-gradient(100deg, #273d38, #547064 52%, #9d8652) !important;
+            color: #edf7ed !important;
+            border: 1px solid #9ab8a4;
+            box-shadow: 0 8px 26px rgba(4, 20, 17, .7), inset 0 1px rgba(235, 255, 235, .22) !important;
+        }
+        /* 加载页沿用大厅的暗青背景与红金火焰动效 */
+        #loading-view {
+            background: linear-gradient(148deg, transparent 0 34%, rgba(42, 93, 84, .42) 34.2% 53%, transparent 53.2%), linear-gradient(180deg, #09221f 0%, #0a2925 48%, #031412 100%) !important;
+            overflow: hidden;
+        }
+        #loading-view::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 18% 78%, rgba(239, 68, 20, .16), transparent 28%), linear-gradient(180deg, transparent 0 45%, rgba(1, 8, 8, .3) 100%);
+            background-size: 160% 160%, 100% 100%;
+            animation: loading-fire-drift 9s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+        #loading-view > * { position: relative; z-index: 1; }
+        @keyframes loading-fire-drift { 0% { background-position: 0% 70%, 0 0; opacity: .72; } 100% { background-position: 100% 30%, 0 0; opacity: 1; } }
+        @keyframes loading-flame-title { 0%, 100% { background-position: 0% 50%; filter: drop-shadow(0 0 5px rgba(239, 68, 36, .25)); } 50% { background-position: 100% 50%; filter: drop-shadow(0 0 16px rgba(255, 170, 45, .52)); } }
+        #loading-view .title-furious {
+            background: linear-gradient(115deg, #a71918, #ff3b20 32%, #ffbf38 52%, #e62a1f 72%, #941516);
+            background-size: 230% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: loading-flame-title 2.8s ease-in-out infinite;
+        }
+        #loading-view #loading-text { color: #d3e1d7 !important; }
+        #loading-view .loading-credit { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 18px; color: #d8e8df; font-size: 11px; font-weight: 700; }
+        #loading-view .loading-credit img { width: 28px; height: 28px; object-fit: cover; border-radius: 50%; border: 1px solid #e7a52e; box-shadow: 0 0 10px rgba(239, 89, 28, .55); }
+        #loading-view .loading-maker { margin-top: 7px; color: #d5b768; font-size: 10px; letter-spacing: .4px; }
+        #loading-view #btn-enter-menu { background: linear-gradient(100deg, #df2b21, #f06b18 52%, #f2a313) !important; color: #08100f !important; border: 1px solid #ffc84e; }
+        #gameCanvas { visibility: hidden; }
+        @keyframes hammer-hud-pop { 0% { transform: scale(1); } 35% { transform: scale(1.28) translateY(-3px); } 70% { transform: scale(.92); } 100% { transform: scale(1); } }
+        #hud-hammer.hammer-pop { animation: hammer-hud-pop .45s ease-out; }
+        #skill-countdown { position: absolute; left: 18px; bottom: 24px; z-index: 25; width: 58px; height: 58px; color: rgba(255, 209, 102, .62); font: 900 48px/.95 'Teko', sans-serif; text-align: center; text-shadow: 0 0 12px rgba(255, 120, 35, .38); pointer-events: none; }
+        #lobby-view .char-help { width: 100%; margin-top: 10px; padding: 8px 10px; border: 1px solid rgba(236, 170, 64, .35); border-radius: 10px; background: rgba(6, 14, 18, .78); text-align: left; font-size: 10px; line-height: 1.55; }
+        #lobby-view .char-help strong { color: #ffb52e; }
+        #lobby-view .scene-picker { width: 100%; margin-top: 9px; padding: 7px 9px; border: 1px solid rgba(130, 200, 183, .45); border-radius: 9px; background: rgba(2, 17, 18, .9); color: #dbeee4; font-size: 11px; font-weight: 700; }
+        #lobby-view .scene-picker option:disabled { color: #687477; background: #172022; }
+        #tutorial-modal { z-index: 60; }
+        #tutorial-modal .tutorial-card { width: 100%; max-width: 350px; padding: 20px; border: 1px solid rgba(255, 184, 64, .65); border-radius: 22px; background: linear-gradient(145deg, rgba(24, 24, 22, .98), rgba(8, 29, 26, .98)); box-shadow: 0 0 35px rgba(239, 68, 36, .24); }
+        #tutorial-modal .tutorial-row { padding: 8px 0; border-bottom: 1px solid rgba(160, 190, 175, .16); font-size: 12px; }
+        #tutorial-modal .tutorial-row:last-child { border-bottom: 0; }
+        .volume-control { accent-color: #e84b2b; width: 115px; }
+        #store-modal { z-index: 55; }
+        #store-modal .store-card { width: 100%; max-width: 370px; max-height: 82vh; overflow: auto; padding: 18px; border: 1px solid rgba(255, 184, 64, .65); border-radius: 22px; background: linear-gradient(145deg, rgba(24, 24, 22, .98), rgba(8, 29, 26, .98)); }
+        .scene-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 0; border-bottom: 1px solid rgba(160, 190, 175, .16); font-size: 11px; }
+        .scene-row button { padding: 5px 8px; border-radius: 6px !important; background: #a0522d; color: #fff; font-weight: 800; }
+        #lobby-view #btn-start-game span {
+            animation: lobby-fire-icon 1s ease-in-out infinite alternate;
+        }
+        @keyframes gameover-fire { 0%, 100% { filter: drop-shadow(0 0 4px rgba(239,68,36,.25)); transform: translateY(0); } 50% { filter: drop-shadow(0 0 16px rgba(255,180,45,.7)); transform: translateY(-2px); } }
+        #gameover-view .gameover-title { animation: gameover-fire 1.8s ease-in-out infinite; background: linear-gradient(110deg, #c51f1c, #ffb52e, #ed3b22, #ffc13d); background-size: 240% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #final-context { margin: 5px 0 12px; padding: 4px 12px; border: 0; color: #ffd166; font-size: 12px; font-weight: 900; text-shadow: 0 1px 2px #000; }
+        #gameover-share-image { display: block; width: 100%; max-width: 300px; margin: 0 auto 12px; border-radius: 12px; border: 1px solid rgba(255, 184, 64, .4); background: #07100f; -webkit-touch-callout: default; user-select: auto; }
+        #player-name-input { width: 100%; margin: 0 0 10px; padding: 8px 10px; border: 1px solid rgba(255, 184, 64, .5); border-radius: 8px; background: #07100f; color: #fff; text-align: center; font-size: 12px; }
+        @keyframes lobby-fire-icon {
+            from { transform: translateY(1px) scale(.92) rotate(-4deg); filter: drop-shadow(0 0 2px #f97316); }
+            to { transform: translateY(-2px) scale(1.12) rotate(4deg); filter: drop-shadow(0 0 8px #ffd166); }
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex items-center justify-center bg-black select-none text-slate-100">
+
+    <div id="game-container" class="relative w-full h-full max-w-[480px] max-h-[920px] bg-slate-950 overflow-hidden shadow-2xl border-x border-slate-800 flex flex-col justify-between">
+        
+        <canvas id="gameCanvas" class="absolute inset-0 w-full h-full z-0 block"></canvas>
+
+        <!-- 1. 独立加载页面 -->
+        <div id="loading-view" class="screen-layer items-center justify-center text-center bg-slate-950">
+            <div class="my-auto space-y-4 w-full max-w-[280px]">
+                <h1 class="title-furious text-5xl sm:text-6xl italic tracking-tighter">
+                    LOADING
+                </h1>
+                <p id="loading-text" class="text-xs font-mono text-slate-400">正在加载游戏资源 (0/0)</p>
+                <div class="w-full bg-slate-900 border border-slate-700 rounded-full h-3 overflow-hidden p-0.5">
+                    <div id="loading-bar" class="bg-gradient-to-r from-red-600 to-amber-500 h-full rounded-full transition-all duration-100" style="width: 0%;"></div>
+                </div>
+                <button id="btn-enter-menu" class="hidden w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 text-slate-950 font-black text-sm tracking-wider shadow-lg active:scale-98 transition animate-pulse">
+                    🚀 点击进入游戏
+                </button>
+                <div class="loading-credit"><img src="avatar-logo.png" alt="avatar logo"><span>演员谢苗超话</span></div>
+                <div class="loading-maker">制作：林科森</div>
+            </div>
+            <div class="text-[10px] text-slate-500">《火遮眼》动作闯关原型 · 粉丝向作品</div>
+        </div>
+
+        <!-- 2. 主菜单 / 选人大厅页面 (播放 bgm_01) -->
+        <div id="lobby-view" class="screen-layer hidden opacity-0 pointer-events-none">
+            <div class="flex items-center justify-between pt-1">
+                <div class="flex items-center gap-1.5 text-xs font-mono tracking-widest text-slate-300 uppercase">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> THE FURIOUS · 火遮眼
+                </div>
+                <div class="flex gap-2"><button id="btn-store" class="p-2.5 rounded-xl bg-slate-900/90 border border-amber-700/60 text-sm hover:bg-slate-800 active:scale-95 transition shadow">🛒</button><button id="btn-lobby-gear" class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-sm hover:bg-slate-800 active:scale-95 transition shadow">⚙️</button></div>
+            </div>
+
+            <div class="text-center my-auto py-1 flex flex-col items-center">
+                <div class="px-4 py-1 mb-2 rounded-full bg-stone-950/80 border border-red-800/80 text-[10px] font-bold text-red-400 tracking-wider uppercase shadow-md">
+                    HARDCORE ACTION EDITION · 全角色解锁测试版
+                </div>
+                <div class="title-flappy">FLAPPY</div>
+                <div class="title-furious">FURIOUS</div>
+                <p class="text-[11px] text-slate-300 mt-2 font-medium tracking-wide">《火遮眼》粉丝向动作闯关原型 · 非官方作品</p>
+            </div>
+
+            <div class="relative w-full bg-slate-900/85 border border-slate-700/80 rounded-3xl p-4 shadow-2xl my-auto">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] font-black text-slate-300 uppercase tracking-wider">选择参战人员 (<span id="char-index-indicator">1/7</span>)</span>
+                    <span id="char-status-badge" class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">已就绪</span>
+                </div>
+
+                <div class="relative w-full flex items-center justify-between gap-2 py-1">
+                    <button id="btn-char-prev" class="w-9 h-9 rounded-xl bg-slate-800 text-slate-200 flex items-center justify-center font-bold text-lg active:scale-90 transition">❮</button>
+
+                    <div id="character-card" class="flex-1 flex flex-col items-center text-center px-1">
+                        <div class="relative w-24 h-24 mb-2 flex items-center justify-center">
+                            <canvas id="char-preview-canvas" width="96" height="96" class="rounded-2xl bg-slate-950/90 border border-slate-700"></canvas>
+                        </div>
+                        <h3 id="char-name" class="text-base font-black text-white">王伟</h3>
+                        <span id="char-actor" class="text-[10px] text-slate-300">谢苗 饰</span>
+                        <p id="char-style" class="text-xs text-amber-400 font-bold mt-0.5">短打八极 · 技能：吃5个火苗自动释放</p>
+                        <div class="char-help"><strong id="char-skill-trigger">锤子 ×1 触发</strong><br><span id="char-skill-effect">怒拳连打：清除前方最近的管道障碍</span></div>
+                        <select id="scene-picker" class="scene-picker" aria-label="选择场景"></select>
+                    </div>
+
+                    <button id="btn-char-next" class="w-9 h-9 rounded-xl bg-slate-800 text-slate-200 flex items-center justify-center font-bold text-lg active:scale-90 transition">❯</button>
+                </div>
+            </div>
+
+            <button id="btn-start-game" class="w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 text-slate-950 font-black text-lg tracking-wider shadow-lg flex items-center justify-center gap-2 active:scale-98 transition">
+                <span>🔥</span> PLAY
+            </button>
+        </div>
+
+        <!-- 3. 游戏内 HUD (开始游戏后切换播放 bgm_02) -->
+        <div id="in-game-hud" class="relative z-20 pt-4 px-4 flex flex-col gap-2 pointer-events-none opacity-0 transition-opacity duration-300">
+            <div class="w-full bg-slate-900/80 border border-slate-700/80 rounded-full h-2.5 overflow-hidden p-0.5 shadow-inner">
+                <div id="skill-charge-bar" class="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 h-full rounded-full transition-all duration-150" style="width: 0%;"></div>
+            </div>
+
+            <div class="flex justify-between items-start">
+                <div class="flex flex-col gap-1">
+                    <div id="hud-stage-badge" class="px-2.5 py-1 rounded bg-red-950/80 border border-red-500/50 text-[11px] font-black text-red-300 shadow">
+                        第一幕：夜雨追凶
+                    </div>
+                    <div id="hud-char-badge" class="px-2 py-0.5 rounded bg-slate-900/80 border border-slate-700 text-[10px] text-amber-400 font-bold">
+                        王伟 · 双拳
+                    </div>
+                </div>
+
+                <!-- 中间分数与独立暂停键 -->
+                <div class="flex items-center gap-3">
+                    <div class="flex flex-col items-center">
+                        <span id="hud-score" class="pixel-font text-3xl sm:text-4xl text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">0</span>
+                        <span id="hud-best-small" class="text-[10px] font-bold text-slate-400">BEST: 0</span>
+                    </div>
+                    <div class="pointer-events-auto">
+                        <button id="btn-pause-game" class="w-10 h-10 rounded-xl bg-slate-900/90 border border-slate-700 text-base flex items-center justify-center hover:bg-slate-800 active:scale-95 shadow transition">⏸️</button>
+                    </div>
+                </div>
+
+                <!-- 右上角设置键 -->
+                <div class="pointer-events-auto">
+                    <button id="btn-pause-gear" class="w-10 h-10 rounded-xl bg-slate-900/90 border border-slate-700 text-base flex items-center justify-center hover:bg-slate-800 active:scale-95 shadow transition">⚙️</button>
+                </div>
+            </div>
+
+            <div class="flex gap-2 font-bold text-xs items-center">
+                <span id="hud-health" class="px-2 py-1 bg-black/60 rounded text-red-400">♥ ♥ ♥</span>
+                <span id="hud-shield" class="hidden px-2 py-1 bg-blue-950/80 border border-blue-500/50 rounded text-blue-300 font-bold">🛡️ 护盾 x0</span>
+                <span id="hud-flame" class="px-2.5 py-1 bg-black/85 border border-orange-500/50 rounded text-orange-400 font-black">🔥 0/10</span>
+                <span id="hud-hammer" class="px-2.5 py-1 bg-black/85 border border-amber-500/50 rounded text-amber-300 font-black">🔨 0/1</span>
+            </div>
+        </div>
+
+        <!-- 技能触发 Toast 提示 -->
+        <div id="skill-toast" class="absolute inset-x-0 top-1/3 z-30 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
+            <div class="px-6 py-2.5 bg-red-950/90 border-2 border-amber-400 rounded-2xl shadow-2xl text-center">
+                <div id="skill-toast-title" class="text-sm font-black text-amber-300 tracking-wider">⚡ 触发专属大招！</div>
+                <div id="skill-toast-desc" class="text-xs font-bold text-white mt-0.5">全屏清障 ＆ 自动吸金</div>
+            </div>
+        </div>
+        <div id="skill-countdown" class="hidden">技能剩余 5 秒</div>
+
+        <!-- 游戏结束弹窗 -->
+        <div id="gameover-view" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-black/85 backdrop-blur-md">
+            <div class="w-full max-w-[340px] bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-2xl flex flex-col items-center text-center">
+                <input id="player-name-input" type="text" maxlength="20" placeholder="请输入玩家名（可选）">
+                <img id="gameover-share-image" alt="1比1游戏成绩单，可长按保存">
+                <div id="final-context" class="hidden">王伟 · 货车追逐</div>
+                <div id="final-score" class="hidden">0</div><div id="final-best" class="hidden">0</div>
+                <button id="btn-retry" class="w-full py-3.5 rounded-xl bg-red-600 text-white font-black text-sm mb-2 active:scale-95 transition">🔄 再次出击</button>
+                <button id="btn-return-lobby" class="w-full py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs active:scale-95 transition">👥 返回选人大厅</button>
+            </div>
+        </div>
+
+        <!-- 设置弹窗 -->
+        <div id="settings-modal" class="hidden absolute inset-0 z-40 flex items-center justify-center p-5 bg-black/85 backdrop-blur-md">
+            <div class="w-full max-w-[360px] bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2"><span class="text-lg">⚙️</span><h3 class="text-sm font-black text-white tracking-wider">GAME SETTINGS</h3></div>
+                    <button id="btn-close-settings" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center font-bold text-sm">✕</button>
+                </div>
+                <div class="space-y-3 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300 font-bold">🔊 角色音效 (SFX)</span>
+                        <button id="toggle-sfx" class="px-3 py-1 rounded-lg bg-red-600 text-white font-bold transition">开启</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300 font-bold">🎵 背景音乐 (BGM)</span>
+                        <button id="toggle-bgm" class="px-3 py-1 rounded-lg bg-red-600 text-white font-bold transition">开启</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300 font-bold">🔉 音量</span>
+                        <input id="bgm-volume" class="volume-control" type="range" min="0" max="100" value="35">
+                    </div>
+                </div>
+                <button id="btn-resume-game" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-black tracking-wider transition">返回游戏</button>
+                <button id="btn-settings-lobby" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-black tracking-wider transition">返回大厅</button>
+            </div>
+        </div>
+
+        <div id="tutorial-modal" class="hidden absolute inset-0 flex items-center justify-center p-5 bg-black/85 backdrop-blur-md">
+            <div class="tutorial-card">
+                <div class="text-center text-xl font-black text-amber-300 mb-1">🔥 游戏说明</div>
+                <div class="text-center text-[11px] text-slate-400 mb-3">控制角色穿过管道，收集火苗和锤子</div>
+                <div class="tutorial-row"><b class="text-white">操作：</b>点击屏幕 / 空格键上升</div>
+                <div class="tutorial-row"><b class="text-orange-300">🔥 火苗：</b>普通角色收集 5 个恢复 1 滴血，大块头收集 10 个获得 1 个护盾</div>
+                <div class="tutorial-row"><b class="text-amber-300">🔨 锤子：</b>按角色所需数量触发专属技能</div>
+                <div class="tutorial-row"><b class="text-red-300">⚠️ 注意：</b>撞击管道或边界会损失生命</div>
+                <label class="flex items-center gap-2 mt-4 text-[11px] text-slate-400"><input id="tutorial-dont-show" type="checkbox" class="accent-amber-500"> 下次不再显示</label>
+                <button id="btn-tutorial-start" class="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-amber-500 text-slate-950 font-black">开始游戏</button>
+            </div>
+        </div>
+        <div id="store-modal" class="hidden absolute inset-0 flex items-center justify-center p-5 bg-black/85 backdrop-blur-md">
+            <div class="store-card"><div class="flex items-center justify-between mb-3"><h3 class="text-lg font-black text-amber-300">🛒 场景商店</h3><button id="btn-close-store" class="text-slate-400 text-lg">✕</button></div><div class="text-xs text-slate-300 mb-3">累计锤子：<b id="store-hammers" class="text-amber-300">0</b></div><div id="store-scene-list"></div></div>
+        </div>
+
+    </div>
+
+    <!-- 隐藏的音频标签：分别对应 bgm_01 (大厅) 与 bgm_02 (局内战斗) -->
+    <audio id="bgm-01" src="audio/bgm_01.mp3" preload="auto" autoplay loop></audio>
+    <audio id="bgm-02" src="audio/bgm_02.mp3" preload="auto" loop></audio>
+
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.sfxEnabled = true;
+                this.bgmEnabled = true;
+                this.bgmVolume = Number(localStorage.getItem('flappyBgmVolume') || 0.35);
+                this.bgm01 = document.getElementById('bgm-01');
+                this.bgm02 = document.getElementById('bgm-02');
+                this.bgm01.volume = this.bgmVolume;
+                this.bgm02.volume = this.bgmVolume;
+            }
+
+            init() {
+                // 解除浏览器自动播放限制
+                if (this.bgmEnabled) {
+                    this.playLobbyBgm();
+                }
+            }
+
+            playLobbyBgm() {
+                if (!this.bgmEnabled) return;
+                this.bgm02.pause();
+                this.bgm02.currentTime = 0;
+                this.bgm01.play().catch(e => {});
+            }
+
+            playGameBgm() {
+                if (!this.bgmEnabled) return;
+                this.bgm01.pause();
+                this.bgm01.currentTime = 0;
+                this.bgm02.pause();
+                this.bgm02.currentTime = 0;
+                this.bgm02.volume = this.bgmVolume;
+                this.bgm02.muted = false;
+                this.bgm02.play().catch(() => {});
+            }
+
+            stopAllBgm() {
+                this.bgm01.pause();
+                this.bgm02.pause();
+            }
+
+            playTone(freq, type = 'sine', duration = 0.15) {
+                if (!this.sfxEnabled) return;
+                try {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    const ctx = new AC();
+                    const now = ctx.currentTime;
+                    const master = ctx.createGain(); master.gain.value = 0.24; master.connect(ctx.destination);
+                    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                    osc.type = type === 'sawtooth' ? 'sawtooth' : 'square';
+                    osc.frequency.setValueAtTime(Math.max(55, freq * 0.55), now);
+                    osc.frequency.exponentialRampToValueAtTime(Math.max(38, freq * 0.22), now + duration);
+                    gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                    osc.connect(gain); gain.connect(master); osc.start(now); osc.stop(now + duration);
+                    const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+                    const noise = ctx.createBufferSource(); noise.buffer = buffer;
+                    const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = type === 'sawtooth' ? 900 : 1800;
+                    const ng = ctx.createGain(); ng.gain.setValueAtTime(type === 'sawtooth' ? 0.32 : 0.16, now); ng.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                    noise.connect(filter); filter.connect(ng); ng.connect(master); noise.start(now); noise.stop(now + duration);
+                } catch(e) {}
+            }
+            playScore() { this.playTone(180, 'square', 0.16); }
+            playCrash() { this.playTone(95, 'sawtooth', 0.42); }
+            playPickup() { this.playTone(260, 'square', 0.18); }
+        }
+        const audio = new SoundEngine();
+
+        const CHARACTERS = [
+            { id: 0, name: "王伟", actor: "谢苗 饰", style: "近身重拳", weapon: "双拳", maxHp: 3, skillName: "怒拳连打", skillTrigger: "锤子 ×1 触发", skillDesc: "挥出重拳，清除前方最近的管道障碍" },
+            { id: 1, name: "纳文", actor: "乔·塔斯利姆 饰", style: "正统柔道", weapon: "柔道擒抱", maxHp: 2, skillName: "幽灵穿墙", skillTrigger: "锤子 ×3 触发", skillDesc: "进入 5 秒幽灵化，期间无视管道碰撞" },
+            { id: 2, name: "大块头", actor: "怪力狂人", style: "防爆重装", weapon: "重铠护盾", maxHp: 5, skillName: "重坦护盾", skillTrigger: "被动：火苗 ×5 得护盾；锤子 ×3 得护盾", skillDesc: "开场自带 1 个护盾，火苗不用于回血" },
+            { id: 3, name: "阿德", actor: "雅彦·鲁伊安 饰", style: "班卡苏拉", weapon: "穿心猎箭", maxHp: 3, skillName: "全屏清障与吸金", skillTrigger: "锤子 ×3 触发", skillDesc: "清空管道，并磁吸 3 秒内沿途锤子和火苗" },
+            { id: 4, name: "柏龙", actor: "极恶巨头", style: "空手道大师", weapon: "时间减速", maxHp: 3, skillName: "子弹时间", skillTrigger: "锤子 ×3 触发", skillDesc: "进入 5 秒子弹时间，全局速度减半" },
+            { id: 5, name: "王雨晴", actor: "杨恩又 饰", style: "纯真执念", weapon: "父亲残影", maxHp: 1, skillName: "缩身逃生", skillTrigger: "锤子 ×1 触发", skillDesc: "身体缩小并获得 5 秒完全无敌" },
+            { id: 6, name: "谷垣健治", actor: "动作导演", style: "倒带调度", weapon: "导演无敌", maxHp: 4, skillName: "导演自动无敌飞行", skillTrigger: "锤子 ×3 触发", skillDesc: "5 秒自动高速无敌飞行，并吸取锤子和火苗" }
+        ];
+
+        const CHARACTER_IMAGES = {
+            0: 'assets/characters/wangwei.png', 1: 'assets/characters/nawen.png',
+            2: 'assets/characters/dakuaitou.png', 3: 'assets/characters/ade.png',
+            4: 'assets/characters/bailong.png', 5: 'assets/characters/wangyuqing.png',
+            6: 'assets/characters/kenji.png'
+        };
+
+        const CHARACTER_SPRITESHEETS = {
+            0: 'assets/characters/wangwei_anim.png', 1: 'assets/characters/nawen_anim.png',
+            2: 'assets/characters/dakuaitou_anim.png', 3: 'assets/characters/ade_anim.png',
+            4: 'assets/characters/bailong_anim.png', 5: 'assets/characters/wangyuqing_anim.png',
+            6: 'assets/characters/kenji_anim.png'
+        };
+
+        const SCENES = [
+            { id: 'wangwei', name: '王伟 · 货车追逐', bg: 'assets/backgrounds/wangwei_truck.jfif', top: 'assets/pipes/wangwei_top-.png', bottom: 'assets/pipes/wangwei_bottom.png' },
+            { id: 'nawen', name: '纳文 · 铁笼仓库', bg: 'assets/backgrounds/nawen_cage.jfif', top: 'assets/pipes/nawen_top.png', bottom: 'assets/pipes/nawen_bottom.png' },
+            { id: 'dakuaitou', name: '大块头 · 冰冷工厂', bg: 'assets/backgrounds/dakuaitou_icefactory.jfif', top: 'assets/pipes/dakuaitou_top.png', bottom: 'assets/pipes/dakuaitou-bottom.png' },
+            { id: 'ade', name: '阿德 · 警察局追捕', bg: 'assets/backgrounds/ade_police_station.jfif', top: 'assets/pipes/ade_top.png', bottom: 'assets/pipes/ade_bottom.png' },
+            { id: 'bailong', name: '柏龙 · 雨夜街头', bg: 'assets/backgrounds/bailong_rainfight.jpg', top: 'assets/pipes/bailong_top.png', bottom: 'assets/pipes/bailong_bottom.png' },
+            { id: 'wangyuqing', name: '王雨晴 · 蛇窟', bg: 'assets/backgrounds/wangyuqing_snake_cave.jfif', top: 'assets/pipes/wangyuqing_top.png', bottom: 'assets/pipes/wangyuqing_bottom.png' },
+            { id: 'kenji', name: '谷垣健治 · 电影片场', bg: 'assets/backgrounds/kenji_director.jfif', top: 'assets/pipes/kenji_top.png', bottom: 'assets/pipes/kenji_bottom.png' }
+        ];
+        const BACKGROUND_IMAGES = { stage0: 'assets/backgrounds/wangwei_truck.jfif' };
+        const ITEM_IMAGES = { flame: 'assets/items/flame.png', hammer: 'assets/items/hammer.jfif' };
+        const PIPE_IMAGES = { top: 'assets/pipes/wangwei_top-.png', bottom: 'assets/pipes/wangwei_bottom.png' };
+        const ASSET_CACHE = {};
+
+        const allPaths = [...Object.values(CHARACTER_IMAGES), ...Object.values(CHARACTER_SPRITESHEETS), ...Object.values(BACKGROUND_IMAGES), ...Object.values(ITEM_IMAGES), ...Object.values(PIPE_IMAGES), ...SCENES.flatMap(s => [s.bg, s.top, s.bottom])];
+        const uniquePaths = Array.from(new Set(allPaths));
+        const audioAssetPaths = ['audio/bgm_01.mp3', 'audio/bgm_02.mp3'];
+        const preloadTotal = uniquePaths.length + audioAssetPaths.length;
+        let loadedCount = 0;
+        let failedPaths = [];
+        let selectedSceneId = localStorage.getItem('flappySelectedScene') || 'wangwei';
+        let totalStoreHammers = Number(localStorage.getItem('flappyStoreHammers') || 0);
+        const unlockedScenes = new Set(SCENES.map(scene => scene.id));
+
+        function preloadAssets() {
+            const loadingText = document.getElementById('loading-text');
+            const loadingBar = document.getElementById('loading-bar');
+            const enterBtn = document.getElementById('btn-enter-menu');
+            const updateLoadingProgress = () => {
+                const pct = Math.floor((loadedCount / preloadTotal) * 100);
+                loadingText.textContent = `正在加载游戏资源 (${loadedCount}/${preloadTotal})`;
+                loadingBar.style.width = `${pct}%`;
+            };
+            const finishLoading = () => {
+                updateLoadingProgress();
+                if (loadedCount >= preloadTotal && failedPaths.length === 0) {
+                    loadingText.textContent = '全部游戏素材加载完毕！';
+                    loadingBar.style.width = '100%';
+                    enterBtn.classList.remove('hidden');
+                    updateCharacterCard();
+                } else if (loadedCount >= preloadTotal && failedPaths.length > 0) {
+                    loadingText.textContent = `有 ${failedPaths.length} 个素材加载失败，请检查文件路径后重试`;
+                }
+            };
+
+            uniquePaths.forEach(src => {
+                const img = new Image();
+                img.onload = () => {
+                    ASSET_CACHE[src] = img;
+                    loadedCount++;
+                    finishLoading();
+                };
+                img.onerror = () => {
+                    loadedCount++;
+                    failedPaths.push(src);
+                    ASSET_CACHE[src] = null;
+                    finishLoading();
+                };
+                img.src = new URL(src, document.baseURI).href;
+            });
+            audioAssetPaths.forEach(src => {
+                const media = new Audio();
+                let counted = false;
+                const markMedia = () => { if (!counted) { counted = true; loadedCount++; finishLoading(); } };
+                media.preload = 'auto';
+                media.addEventListener('canplaythrough', markMedia, { once: true });
+                media.addEventListener('loadeddata', markMedia, { once: true });
+                media.addEventListener('error', () => { if (!counted) { counted = true; failedPaths.push(src); loadedCount++; finishLoading(); } }, { once: true });
+                media.src = new URL(src, document.baseURI).href;
+                media.load();
+            });
+        }
+
+        class DataManager {
+            constructor() { this.bestScore = 0; this.selectedChar = 0; }
+        }
+        const dataMgr = new DataManager();
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        class GameApp {
+            constructor() {
+                this.state = 'LOADING';
+                this.width = 360;
+                this.height = 640;
+                this.score = 0;
+
+                this.bird = { x: 90, y: 280, vy: 0, radius: 20, invulnerableTimer: 0, skillActiveTimer: 0 };
+                this.pipes = [];
+                this.flameCount = 0;
+                this.hammerCount = 0;
+                this.currentHp = 3;
+                this.shields = 0;
+                this.flameForShield = 0;
+
+                this.animFrame = 0;
+                this.isAnimating = false;
+                this.animTimer = 0;
+
+                this.bgScrollX = 0;
+                this.pipeTimer = 0;
+                this.basePipeInterval = 110;
+                this.basePipeSpeed = 2.4;
+                this.pipeInterval = 110;
+                this.pipeGap = 180;
+                this.pipeWidth = 84;
+                this.pipeSpeed = 2.4;
+
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                const container = document.getElementById('game-container');
+                const rect = container.getBoundingClientRect();
+                this.width = rect.width; this.height = rect.height;
+                canvas.width = this.width; canvas.height = this.height;
+            }
+
+            get activeChar() { return CHARACTERS[dataMgr.selectedChar]; }
+            get activeScene() { return SCENES.find(s => s.id === selectedSceneId) || SCENES[0]; }
+
+            initGame() {
+                this.score = 0;
+                const char = this.activeChar;
+                this.bird.x = this.width * 0.28;
+                this.bird.y = this.height * 0.42;
+                this.bird.vy = 0;
+                this.bird.invulnerableTimer = 0;
+                this.bird.skillActiveTimer = 0;
+
+                this.currentHp = char.maxHp;
+                this.flameCount = 0;
+                this.hammerCount = 0;
+                this.shields = dataMgr.selectedChar === 2 ? 1 : 0;
+                this.flameForShield = 0;
+                this.pipes = []; 
+                this.pipeTimer = 40;
+
+                this.state = 'PLAYING';
+                canvas.style.visibility = 'visible';
+                
+                // 开始游戏：切换播放战斗 BGM (bgm_02)
+                audio.playGameBgm();
+
+                this.updateHud();
+
+                document.getElementById('lobby-view').classList.add('hidden', 'opacity-0', 'pointer-events-none');
+                document.getElementById('in-game-hud').classList.remove('opacity-0');
+                document.getElementById('gameover-view').classList.add('hidden');
+            }
+
+            jump() {
+                if (this.state !== 'PLAYING') return;
+                if (dataMgr.selectedChar === 6 && this.bird.skillActiveTimer > 0) return;
+
+                const isHeavy = (dataMgr.selectedChar === 2);
+                this.bird.vy = isHeavy ? -6.6 : -6.2;
+                this.triggerAnimSequence();
+                audio.playTone(320, 'sine', 0.1);
+            }
+
+            triggerAnimSequence() {
+                this.animFrame = 1;
+                this.isAnimating = true;
+                this.animTimer = 0;
+            }
+
+            triggerAutoSkill() {
+                const char = this.activeChar;
+                this.hammerCount = 0;
+                audio.playTone(680, 'square', 0.3);
+                this.triggerAnimSequence();
+                document.getElementById('hud-hammer').textContent = '🔨 技能触发';
+                const hammerHud = document.getElementById('hud-hammer');
+                hammerHud.classList.remove('hammer-pop');
+                void hammerHud.offsetWidth;
+                hammerHud.classList.add('hammer-pop');
+
+                const toast = document.getElementById('skill-toast');
+                document.getElementById('skill-toast-title').textContent = `⚡ 触发技能：${char.skillName}！`;
+                document.getElementById('skill-toast-desc').textContent = char.skillDesc;
+                toast.classList.remove('opacity-0');
+                setTimeout(() => toast.classList.add('opacity-0'), 1500);
+
+                if (dataMgr.selectedChar === 0) {
+                    const nearest = this.pipes.filter(p => !p.shattered && p.x > this.bird.x).sort((a, b) => a.x - b.x)[0];
+                    if (nearest) nearest.shattered = true;
+                } else if (dataMgr.selectedChar === 1) {
+                    this.bird.skillActiveTimer = 5 * 60;
+                } else if (dataMgr.selectedChar === 2) {
+                    this.shields += 1;
+                } else if (dataMgr.selectedChar === 3) {
+                    this.bird.skillActiveTimer = 3 * 60;
+                    this.pipes.forEach(p => { p.shattered = true; });
+                } else if (dataMgr.selectedChar === 4) {
+                    this.bird.skillActiveTimer = 5 * 60;
+                } else if (dataMgr.selectedChar === 5) {
+                    this.bird.invulnerableTimer = 5 * 60;
+                } else if (dataMgr.selectedChar === 6) {
+                    this.bird.skillActiveTimer = 5 * 60;
+                    this.bird.vy = 0;
+                }
+                this.updateHud();
+                document.getElementById('hud-hammer').textContent = '🔨 技能触发';
+            }
+
+            update() {
+                if (this.state !== 'PLAYING') return;
+
+                const isKenjiAuto = (dataMgr.selectedChar === 6 && this.bird.skillActiveTimer > 0);
+                const isBailongSlow = (dataMgr.selectedChar === 4 && this.bird.skillActiveTimer > 0);
+                const isAdeMagnet = (dataMgr.selectedChar === 3 && this.bird.skillActiveTimer > 0);
+
+                const gravity = (dataMgr.selectedChar === 2) ? 0.38 : 0.32;
+                if (isKenjiAuto) {
+                    this.bird.vy = 0;
+                    this.bird.y = this.height * 0.45;
+                } else {
+                    this.bird.vy += gravity;
+                    this.bird.y += this.bird.vy;
+                }
+
+                if (this.bird.skillActiveTimer > 0) {
+                    this.bird.skillActiveTimer--;
+                }
+
+                if (this.isAnimating) {
+                    this.animTimer++;
+                    if (this.animTimer > 6) {
+                        this.animFrame++;
+                        this.animTimer = 0;
+                        if (this.animFrame > 2) {
+                            this.animFrame = 0;
+                            this.isAnimating = false;
+                        }
+                    }
+                }
+
+                if (this.bird.invulnerableTimer > 0) this.bird.invulnerableTimer--;
+                this.updateSkillCountdown();
+
+                const groundY = this.height - 70;
+                if (this.bird.y + this.bird.radius >= groundY || this.bird.y - this.bird.radius <= 0) {
+                    if (isKenjiAuto) {
+                        this.bird.y = Math.max(this.bird.radius, Math.min(groundY - this.bird.radius, this.bird.y));
+                    } else {
+                        this.takeDamage();
+                        return;
+                    }
+                }
+
+                let currentSpeed = isBailongSlow ? this.basePipeSpeed * 0.5 : this.basePipeSpeed;
+                let currentInterval = isBailongSlow ? this.basePipeInterval * 1.5 : this.basePipeInterval;
+
+                this.pipeTimer++;
+                if (this.pipeTimer >= currentInterval) {
+                    this.pipeTimer = 0;
+                    const gapY = Math.floor(Math.random() * (groundY - this.pipeGap - 160)) + 90;
+
+                    this.pipes.push({
+                        x: this.width + 20, gapY: gapY, width: this.pipeWidth,
+                        passed: false, shattered: false,
+                        hasFlame: Math.random() > 0.22, hasHammer: Math.random() <= 0.22, collected: false,
+                        itemX: this.width + 20 + (this.pipeWidth / 2), itemY: gapY + (this.pipeGap / 2)
+                    });
+                }
+
+                for (let i = this.pipes.length - 1; i >= 0; i--) {
+                    const p = this.pipes[i];
+                    p.x -= currentSpeed; 
+                    p.itemX -= currentSpeed;
+
+                    if (!p.passed && p.x + p.width < this.bird.x) {
+                        p.passed = true;
+                        this.score++;
+                        audio.playScore();
+                        this.updateHud();
+                    }
+
+                    let collectDist = (isKenjiAuto || isAdeMagnet) ? 280 : (this.bird.radius + 20);
+                    if ((p.hasFlame || p.hasHammer) && !p.collected) {
+                        if (Math.hypot(this.bird.x - p.itemX, this.bird.y - p.itemY) < collectDist) {
+                            p.collected = true;
+                            audio.playPickup();
+                            if (p.hasHammer) {
+                                this.hammerCount++;
+                                if (this.hammerCount >= this.getSkillCost()) this.triggerAutoSkill();
+                            } else if (dataMgr.selectedChar === 2) {
+                                this.flameForShield++;
+                                if (this.flameForShield >= 10) {
+                                    this.flameForShield = 0;
+                                    this.shields++;
+                                }
+                            } else {
+                                this.flameCount++;
+                                if (this.flameCount >= 5 && this.currentHp < this.activeChar.maxHp) {
+                                    this.flameCount -= 5;
+                                    this.currentHp++;
+                                }
+                            }
+                            this.updateHud();
+                        }
+                    }
+
+                    const isGhostActive = (dataMgr.selectedChar === 1 && this.bird.skillActiveTimer > 0);
+                    if (!p.shattered && !isGhostActive && !isKenjiAuto && this.bird.invulnerableTimer <= 0) {
+                        if (this.bird.x + this.bird.radius > p.x && this.bird.x - this.bird.radius < p.x + p.width) {
+                            if (this.bird.y - this.bird.radius < p.gapY || this.bird.y + this.bird.radius > p.gapY + this.pipeGap) {
+                                this.takeDamage();
+                                p.shattered = true;
+                            }
+                        }
+                    }
+
+                    if (p.x + p.width < -50) this.pipes.splice(i, 1);
+                }
+
+                this.bgScrollX += currentSpeed * 0.3;
+            }
+
+            takeDamage() {
+                if (this.bird.invulnerableTimer > 0) return;
+
+                if (this.shields > 0) {
+                    this.shields--;
+                    audio.playCrash();
+                    this.bird.invulnerableTimer = 60;
+                    this.updateHud();
+                    return;
+                }
+
+                this.currentHp--;
+                audio.playCrash();
+                this.bird.invulnerableTimer = 70;
+                this.updateHud();
+
+                if (this.currentHp <= 0) {
+                    this.die();
+                } else {
+                    this.bird.vy = -4.5;
+                }
+            }
+
+            die() {
+                this.state = 'GAMEOVER';
+                totalStoreHammers += this.hammerCount;
+                localStorage.setItem('flappyStoreHammers', String(totalStoreHammers));
+                if (this.score > dataMgr.bestScore) dataMgr.bestScore = this.score;
+                document.getElementById('final-score').textContent = this.score;
+                document.getElementById('final-best').textContent = dataMgr.bestScore;
+                const contextText = `${this.activeChar.name} · ${this.activeScene.name.split(' · ')[1] || this.activeScene.name}`;
+                document.getElementById('final-context').textContent = contextText;
+                const posterSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071b19"/><stop offset="1" stop-color="#30120e"/></linearGradient><linearGradient id="fire" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#e52820"/><stop offset=".5" stop-color="#ffc43d"/><stop offset="1" stop-color="#e52b1f"/></linearGradient></defs><rect width="720" height="420" rx="24" fill="url(#bg)"/><path d="M0 330 L720 80" stroke="#244f47" stroke-width="80" opacity=".5"/><text x="360" y="82" fill="url(#fire)" font-family="Arial Black,sans-serif" font-size="54" text-anchor="middle" font-style="italic">GAME OVER</text><text x="360" y="147" fill="#ffd166" font-family="Arial,sans-serif" font-size="26" font-weight="900" text-anchor="middle">${contextText}</text><text x="170" y="235" fill="#8fa7a0" font-family="Arial,sans-serif" font-size="22">SCORE</text><text x="170" y="285" fill="#fff" font-family="Arial Black,sans-serif" font-size="50">${this.score}</text><text x="470" y="235" fill="#ffc43d" font-family="Arial,sans-serif" font-size="22">BEST</text><text x="470" y="285" fill="#ffc43d" font-family="Arial Black,sans-serif" font-size="50">${dataMgr.bestScore}</text><text x="360" y="370" fill="#d5b768" font-family="Arial,sans-serif" font-size="20" text-anchor="middle">制作：林科森</text></svg>`;
+                document.getElementById('gameover-share-image').src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(posterSvg)}`;
+                document.getElementById('in-game-hud').classList.add('opacity-0');
+                canvas.style.visibility = 'hidden';
+                document.getElementById('skill-countdown').classList.add('hidden');
+                document.getElementById('gameover-view').classList.remove('hidden');
+            }
+
+            updateSharePoster() {
+                const playerName = (document.getElementById('player-name-input').value || '玩家').replace(/[<>]/g, '');
+                const contextText = `${this.activeChar.name} · ${this.activeScene.name.split(' · ')[1] || this.activeScene.name}`;
+                const posterSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640"><defs><linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071b19"/><stop offset="1" stop-color="#30120e"/></linearGradient><linearGradient id="fire2" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#e52820"/><stop offset=".5" stop-color="#ffc43d"/><stop offset="1" stop-color="#e52b1f"/></linearGradient></defs><rect width="640" height="640" rx="24" fill="url(#bg2)"/><text x="320" y="82" fill="url(#fire2)" font-family="Arial Black,sans-serif" font-size="52" text-anchor="middle" font-style="italic">GAME OVER</text><rect x="80" y="108" width="480" height="52" rx="6" fill="#170f12" stroke="#ff4d5e" stroke-width="5"/><text x="320" y="143" fill="#ffd166" font-family="Arial,sans-serif" font-size="24" font-weight="900" text-anchor="middle">${contextText}</text><text x="320" y="205" fill="#fff" font-family="Arial,sans-serif" font-size="25" font-weight="900" text-anchor="middle">${playerName}</text><circle cx="260" cy="253" r="20" fill="#fff"/><text x="291" y="261" fill="#d8e8df" font-family="Arial,sans-serif" font-size="19" font-weight="900">演员谢苗超话</text><text x="320" y="300" fill="#d5b768" font-family="Arial,sans-serif" font-size="18" text-anchor="middle">制作：林科森</text><line x1="90" y1="330" x2="550" y2="330" stroke="#49665e"/><text x="175" y="390" fill="#8fa7a0" font-family="Arial,sans-serif" font-size="20" text-anchor="middle">SCORE</text><text x="175" y="445" fill="#fff" font-family="Arial Black,sans-serif" font-size="52" text-anchor="middle">${this.score}</text><text x="465" y="390" fill="#ffc43d" font-family="Arial,sans-serif" font-size="20" text-anchor="middle">BEST</text><text x="465" y="445" fill="#ffc43d" font-family="Arial Black,sans-serif" font-size="52" text-anchor="middle">${dataMgr.bestScore}</text><text x="320" y="575" fill="#d5b768" font-family="Arial,sans-serif" font-size="16" text-anchor="middle">长按成绩单保存</text></svg>`;
+                document.getElementById('gameover-share-image').src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(posterSvg)}`;
+                localStorage.setItem('flappyPlayerName', playerName === '玩家' ? '' : playerName);
+            }
+
+            render() {
+                ctx.save();
+                const skyGrad = ctx.createLinearGradient(0, 0, 0, this.height);
+                skyGrad.addColorStop(0, '#101b1a'); skyGrad.addColorStop(1, '#101714');
+                ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, this.width, this.height);
+
+                const scene = this.activeScene;
+                const bgImg = ASSET_CACHE[scene.bg];
+                if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+                    ctx.save(); ctx.globalAlpha = 0.55;
+                    const scale = this.height / bgImg.height;
+                    const scaledW = bgImg.width * scale;
+                    const offsetX = -(this.bgScrollX % scaledW);
+                    ctx.drawImage(bgImg, offsetX, 0, scaledW, this.height);
+                    ctx.drawImage(bgImg, offsetX + scaledW, 0, scaledW, this.height);
+                    ctx.restore();
+                }
+
+                for (let p of this.pipes) {
+                    if (!p.shattered) {
+                        const topPipe = ASSET_CACHE[scene.top];
+                        const bottomPipe = ASSET_CACHE[scene.bottom];
+                        if (topPipe && topPipe.complete && topPipe.naturalWidth > 0) {
+                            ctx.drawImage(topPipe, p.x, 0, p.width, p.gapY);
+                        } else {
+                            ctx.fillStyle = '#53675a'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2.5;
+                            ctx.fillRect(p.x, 0, p.width, p.gapY); ctx.strokeRect(p.x, 0, p.width, p.gapY);
+                        }
+                        const bottomH = (this.height - 70) - (p.gapY + this.pipeGap);
+                        if (bottomPipe && bottomPipe.complete && bottomPipe.naturalWidth > 0) {
+                            ctx.drawImage(bottomPipe, p.x, p.gapY + this.pipeGap, p.width, bottomH);
+                        } else {
+                            ctx.fillRect(p.x, p.gapY + this.pipeGap, p.width, bottomH);
+                            ctx.strokeRect(p.x, p.gapY + this.pipeGap, p.width, bottomH);
+                        }
+                    }
+                    if ((p.hasFlame || p.hasHammer) && !p.collected) {
+                        this.drawItem(p.itemX, p.itemY, p.hasHammer ? 'hammer' : 'flame');
+                    }
+                }
+
+                this.renderSpriteSheet(this.bird.x, this.bird.y, this.activeChar);
+
+                ctx.fillStyle = '#101714'; ctx.fillRect(0, this.height - 70, this.width, 70);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; ctx.fillRect(0, this.height - 70, this.width, 6);
+
+                ctx.restore();
+            }
+
+            drawFlame(x, y) {
+                ctx.save(); ctx.translate(x, y);
+                ctx.shadowBlur = 10; ctx.shadowColor = '#ff6a32';
+                ctx.fillStyle = '#ff6a32';
+                ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#ffe07a';
+                ctx.beginPath(); ctx.arc(0, -2, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+
+            drawItem(x, y, type) {
+                const img = ASSET_CACHE[ITEM_IMAGES[type]];
+                const bobY = Math.sin(Date.now() / 180 + x * 0.01) * 4;
+                y += bobY;
+                if (img && img.complete && img.naturalWidth > 0) {
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(type === 'hammer' ? Math.sin(Date.now() / 260) * .08 : 0);
+                    ctx.drawImage(img, -16, -16, 32, 32);
+                    ctx.restore();
+                    return;
+                }
+                if (type === 'hammer') {
+                    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.45);
+                    ctx.fillStyle = '#8b5e3c'; ctx.fillRect(-2, -1, 4, 18);
+                    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(-9, -10, 18, 9); ctx.restore();
+                } else this.drawFlame(x, y);
+            }
+
+            drawPipeImage(img, x, y, width, height, fromTop) {
+                if (!img || !img.complete || img.naturalWidth <= 0 || height <= 0) return false;
+                const renderWidth = width * 2.25;
+                const renderHeight = img.naturalHeight * (renderWidth / img.naturalWidth);
+                const drawX = x - (renderWidth - width) / 2;
+                const drawY = fromTop ? y : y + height - renderHeight;
+                ctx.drawImage(img, drawX, drawY, renderWidth, renderHeight);
+                return true;
+            }
+
+            getSkillCost() {
+                return [1, 3, 3, 3, 3, 1, 3][dataMgr.selectedChar] || 3;
+            }
+
+            updateSkillCountdown() {
+                const el = document.getElementById('skill-countdown');
+                const remaining = dataMgr.selectedChar === 5 ? this.bird.invulnerableTimer : this.bird.skillActiveTimer;
+                if (remaining > 0 && dataMgr.selectedChar !== 0) {
+                    el.textContent = Math.ceil(remaining / 60);
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            }
+
+            renderSpriteSheet(x, y, char) {
+                ctx.save(); ctx.translate(x, y);
+                if (this.bird.invulnerableTimer > 0 && Math.floor(Date.now() / 60) % 2 === 0) ctx.globalAlpha = 0.4;
+
+                if (dataMgr.selectedChar === 1 && this.bird.skillActiveTimer > 0) ctx.globalAlpha = 0.5;
+
+                const animSrc = CHARACTER_SPRITESHEETS[char.id];
+                const charImg = ASSET_CACHE[animSrc] || ASSET_CACHE[CHARACTER_IMAGES[char.id]];
+                
+                if (charImg && charImg.complete && charImg.naturalWidth > 0) {
+                    const isSpriteSheet = (charImg.naturalWidth >= 300);
+                    if (isSpriteSheet) {
+                        const frameWidth = 128, frameHeight = 128;
+                        const renderSize = 96;
+                        ctx.drawImage(
+                            charImg,
+                            this.animFrame * frameWidth, 0, frameWidth, frameHeight,
+                            -renderSize / 2, -renderSize / 2, renderSize, renderSize
+                        );
+                    } else {
+                        ctx.drawImage(charImg, -48, -48, 96, 96);
+                    }
+                } else {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            updateHud() {
+                document.getElementById('hud-score').textContent = this.score;
+                document.getElementById('hud-best-small').textContent = "BEST: " + dataMgr.bestScore;
+                document.getElementById('hud-char-badge').textContent = this.activeChar.name + " · " + this.activeChar.weapon;
+                document.getElementById('hud-health').textContent = '♥ '.repeat(this.currentHp).trim();
+                const flameGoal = dataMgr.selectedChar === 2 ? 10 : 5;
+                document.getElementById('hud-flame').textContent = `🔥 ${this.flameCount}/${flameGoal}`;
+                const hammerEl = document.getElementById('hud-hammer');
+                if (hammerEl) hammerEl.textContent = `🔨 ${this.hammerCount}/${this.getSkillCost()}`;
+
+                const pct = (this.hammerCount / this.getSkillCost()) * 100;
+                document.getElementById('skill-charge-bar').style.width = `${pct}%`;
+
+                const shieldEl = document.getElementById('hud-shield');
+                if (dataMgr.selectedChar === 2) {
+                    shieldEl.classList.remove('hidden');
+                    shieldEl.textContent = `🛡️ 护盾 x${this.shields}`;
+                } else {
+                    shieldEl.classList.add('hidden');
+                }
+                this.updateSkillCountdown();
+            }
+        }
+
+        const game = new GameApp();
+        window.__game = game;
+
+        function updateCharacterCard() {
+            const char = CHARACTERS[dataMgr.selectedChar];
+            document.getElementById('char-index-indicator').textContent = `${dataMgr.selectedChar + 1}/7`;
+            document.getElementById('char-name').textContent = char.name;
+            document.getElementById('char-actor').textContent = char.actor;
+            document.getElementById('char-style').textContent = `${char.style} · 特技：${char.skillName}（${char.skillDesc}）`;
+            document.getElementById('char-skill-trigger').textContent = char.skillTrigger || '专属技能';
+            document.getElementById('char-skill-effect').textContent = `${char.skillName}：${char.skillDesc}`;
+            const charSceneIndex = dataMgr.selectedChar;
+            const currentSceneIndex = SCENES.findIndex(s => s.id === selectedSceneId);
+            if (currentSceneIndex < 0 || currentSceneIndex > charSceneIndex) selectedSceneId = SCENES[charSceneIndex].id;
+            const scenePicker = document.getElementById('scene-picker');
+            if (scenePicker) {
+                scenePicker.innerHTML = SCENES.map((scene, index) => `<option value="${scene.id}" ${index > charSceneIndex ? 'disabled' : ''}>${index > charSceneIndex ? '🔒 ' : '✓ '}${scene.name}${index > charSceneIndex ? ' · 角色解锁后可用' : ''}</option>`).join('');
+                scenePicker.value = selectedSceneId;
+                scenePicker.onchange = () => { selectedSceneId = scenePicker.value; saveSceneState(); updateCharacterCard(); };
+            }
+
+            const prevCtx = document.getElementById('char-preview-canvas').getContext('2d');
+            prevCtx.clearRect(0, 0, 96, 96);
+            const staticImg = ASSET_CACHE[CHARACTER_IMAGES[char.id]];
+            if (staticImg && staticImg.complete && staticImg.naturalWidth > 0) {
+                prevCtx.drawImage(staticImg, 0, 0, staticImg.naturalWidth, staticImg.naturalHeight, 0, 0, 96, 96);
+            } else {
+                prevCtx.fillStyle = '#ef4444'; prevCtx.beginPath(); prevCtx.arc(48, 48, 24, 0, Math.PI * 2); prevCtx.fill();
+            }
+        }
+
+        function saveSceneState() {
+            localStorage.setItem('flappySelectedScene', selectedSceneId);
+            localStorage.setItem('flappyUnlockedScenes', JSON.stringify([...unlockedScenes]));
+        }
+        function renderStore() {
+            document.getElementById('store-hammers').textContent = totalStoreHammers;
+            document.getElementById('store-scene-list').innerHTML = SCENES.map(scene => {
+                const unlocked = unlockedScenes.has(scene.id);
+                const selected = selectedSceneId === scene.id;
+                const missing = !ASSET_CACHE[scene.top] || !ASSET_CACHE[scene.bottom];
+                const label = missing ? '素材待补齐' : selected ? '使用中' : unlocked ? '使用场景' : '5 锤子兑换';
+                return `<div class="scene-row"><span>${scene.name}<br><small class="text-slate-500">${missing ? '上下障碍物素材未找到' : unlocked ? '已解锁' : '需要累计锤子 ×5'}</small></span><button data-scene="${scene.id}" ${missing || (unlocked && selected) ? 'disabled' : ''}>${label}</button></div>`;
+            }).join('');
+            document.querySelectorAll('#store-scene-list button[data-scene]').forEach(btn => btn.addEventListener('click', () => {
+                const id = btn.dataset.scene;
+                if (!unlockedScenes.has(id)) { if (totalStoreHammers < 5) return; totalStoreHammers -= 5; unlockedScenes.add(id); }
+                selectedSceneId = id; saveSceneState(); renderStore(); updateCharacterCard();
+            }));
+        }
+
+        document.getElementById('btn-enter-menu').addEventListener('click', () => {
+            audio.init();
+            document.getElementById('loading-view').classList.add('hidden');
+            const lobby = document.getElementById('lobby-view');
+            lobby.classList.remove('hidden');
+            setTimeout(() => lobby.classList.remove('opacity-0', 'pointer-events-none'), 50);
+            
+            // 进入大厅后播放 bgm_01
+            audio.playLobbyBgm();
+        });
+
+        document.getElementById('btn-char-prev').addEventListener('click', () => {
+            dataMgr.selectedChar = (dataMgr.selectedChar - 1 + CHARACTERS.length) % CHARACTERS.length;
+            updateCharacterCard();
+        });
+        document.getElementById('btn-char-next').addEventListener('click', () => {
+            dataMgr.selectedChar = (dataMgr.selectedChar + 1) % CHARACTERS.length;
+            updateCharacterCard();
+        });
+
+        const tutorialModal = document.getElementById('tutorial-modal');
+        function beginGameFromTutorial() {
+            if (document.getElementById('tutorial-dont-show').checked) localStorage.setItem('flappyTutorialDone', '1');
+            tutorialModal.classList.add('hidden');
+            audio.init();
+            game.initGame();
+            audio.playGameBgm();
+        }
+        document.getElementById('btn-start-game').addEventListener('click', () => {
+            if (localStorage.getItem('flappyTutorialDone') === '1') { audio.init(); game.initGame(); audio.playGameBgm(); }
+            else tutorialModal.classList.remove('hidden');
+        });
+        document.getElementById('btn-tutorial-start').addEventListener('click', beginGameFromTutorial);
+        const playerNameInput = document.getElementById('player-name-input');
+        playerNameInput.value = localStorage.getItem('flappyPlayerName') || '';
+        playerNameInput.addEventListener('input', () => game.updateSharePoster());
+        document.getElementById('btn-retry').addEventListener('click', () => { game.initGame(); });
+        document.getElementById('btn-return-lobby').addEventListener('click', () => {
+            game.state = 'LOBBY';
+            canvas.style.visibility = 'hidden';
+            document.getElementById('skill-countdown').classList.add('hidden');
+            document.getElementById('gameover-view').classList.add('hidden');
+            document.getElementById('in-game-hud').classList.add('opacity-0');
+            const lobby = document.getElementById('lobby-view');
+            lobby.classList.remove('hidden');
+            setTimeout(() => lobby.classList.remove('opacity-0', 'pointer-events-none'), 50);
+            updateCharacterCard();
+            
+            // 返回大厅恢复播放 bgm_01
+            audio.playLobbyBgm();
+        });
+
+        const settingsModal = document.getElementById('settings-modal');
+        function openSettings() {
+            if (game.state === 'PLAYING') game.state = 'PAUSED';
+            settingsModal.classList.remove('hidden');
+        }
+        function closeSettings() {
+            settingsModal.classList.add('hidden');
+            if (game.state === 'PAUSED') game.state = 'PLAYING';
+        }
+
+        document.getElementById('btn-pause-game').addEventListener('click', () => {
+            if (game.state === 'PLAYING') {
+                game.state = 'PAUSED';
+                alert("游戏已暂停，点击确定返回游戏");
+                game.state = 'PLAYING';
+            }
+        });
+        document.getElementById('btn-lobby-gear').addEventListener('click', openSettings);
+        document.getElementById('btn-pause-gear').addEventListener('click', openSettings);
+        const storeModal = document.getElementById('store-modal');
+        document.getElementById('btn-store').addEventListener('click', () => { renderStore(); storeModal.classList.remove('hidden'); });
+        document.getElementById('btn-close-store').addEventListener('click', () => storeModal.classList.add('hidden'));
+        document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
+        document.getElementById('btn-resume-game').addEventListener('click', closeSettings);
+        document.getElementById('btn-settings-lobby').addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+            game.state = 'LOBBY';
+            canvas.style.visibility = 'hidden';
+            document.getElementById('in-game-hud').classList.add('opacity-0');
+            document.getElementById('skill-countdown').classList.add('hidden');
+            const lobby = document.getElementById('lobby-view');
+            lobby.classList.remove('hidden');
+            setTimeout(() => lobby.classList.remove('opacity-0', 'pointer-events-none'), 50);
+            updateCharacterCard();
+            audio.playLobbyBgm();
+        });
+
+        document.getElementById('toggle-sfx').addEventListener('click', (e) => {
+            audio.sfxEnabled = !audio.sfxEnabled;
+            e.target.textContent = audio.sfxEnabled ? "开启" : "关闭";
+            e.target.className = audio.sfxEnabled ? "px-3 py-1 rounded-lg bg-red-600 text-white font-bold transition" : "px-3 py-1 rounded-lg bg-slate-800 text-slate-400 font-bold transition";
+        });
+        document.getElementById('toggle-bgm').addEventListener('click', (e) => {
+            audio.bgmEnabled = !audio.bgmEnabled;
+            e.target.textContent = audio.bgmEnabled ? "开启" : "关闭";
+            e.target.className = audio.bgmEnabled ? "px-3 py-1 rounded-lg bg-red-600 text-white font-bold transition" : "px-3 py-1 rounded-lg bg-slate-800 text-slate-400 font-bold transition";
+            if (!audio.bgmEnabled) audio.stopAllBgm();
+            else audio.playLobbyBgm();
+        });
+        const bgmVolume = document.getElementById('bgm-volume');
+        bgmVolume.value = Math.round(audio.bgmVolume * 100);
+        bgmVolume.addEventListener('input', (e) => {
+            audio.bgmVolume = Number(e.target.value) / 100;
+            audio.bgm01.volume = audio.bgmVolume;
+            audio.bgm02.volume = audio.bgmVolume;
+            localStorage.setItem('flappyBgmVolume', String(audio.bgmVolume));
+        });
+
+        canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); audio.init(); if (game.state === 'PLAYING') game.jump(); });
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); if (game.state === 'PLAYING') game.jump(); }
+            else if (e.code === 'Escape') { openSettings(); }
+        });
+
+        function gameLoop() {
+            if (game.state === 'PLAYING') {
+                game.update();
+            }
+            game.render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = function() {
+            preloadAssets();
+            audio.playLobbyBgm();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
