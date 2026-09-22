@@ -403,11 +403,11 @@
         <div id="tutorial-modal" class="hidden absolute inset-0 flex items-center justify-center p-5 bg-black/85 backdrop-blur-md">
             <div class="tutorial-card">
                 <div class="text-center text-xl font-black text-amber-300 mb-1">🔥 游戏说明</div>
-                <div class="text-center text-[11px] text-slate-400 mb-3">控制角色穿过管道，收集火苗和锤子<br>
-    得分无上限，所有角色、所有场景全解锁视为通关！
+                <div class="text-center text-[11px] text-slate-400 mb-3">无尽模式，控制角色穿过管道，收集火苗和锤子<br>
+    所有角色、所有场景全解锁视为通关！
 </div>
-                <div class="tutorial-row"><b class="text-white">操作：</b>点击屏幕控制角色</div>
-                <div class="tutorial-row"><b class="text-orange-300">🔥 火苗：</b>普通角色收集 5 个恢复 1 滴血，大块头收集 10 个获得 1 个护盾</div>
+                <div class="tutorial-row"><b class="text-white">操作：</b>点击屏幕控制角色，角色死亡回到游戏大厅</div>
+                <div class="tutorial-row"><b class="text-orange-300">🔥 火苗：</b>除大块头其他角色收集 5 个恢复 1 滴血</div>
                 <div class="tutorial-row"><b class="text-amber-300">🔨 锤子：</b>按角色所需数量触发专属技能</div>
                 <div class="tutorial-row"><b class="text-red-300">⚠️ 注意：</b>撞击管道或边界会损失生命</div>
                 <label class="flex items-center gap-2 mt-4 text-[11px] text-slate-400"><input id="tutorial-dont-show" type="checkbox" class="accent-amber-500"> 下次不再显示</label>
@@ -503,7 +503,7 @@
         const CHARACTERS = [
             { id: 0, name: "王伟", actor: "谢苗 饰", style: "近身重拳", maxHp: 3, skillName: "怒火遮眼", skillTrigger: "锤子 ×1 触发", skillDesc: "挥出重拳，清除前方最近的管道障碍" },
             { id: 1, name: "纳文", actor: "乔·塔斯利姆 饰", style: "正统柔道", maxHp: 3, skillName: "幽灵穿墙", skillTrigger: "锤子 ×3 触发", skillDesc: "进入 5 秒幽灵化，期间无视管道碰撞" },
-            { id: 2, name: "大块头", actor: "黎唯姆 饰", style: "特技武师", maxHp: 5, skillName: "重坦护盾", skillTrigger: "被动：火苗 ×5 得护盾；锤子 ×3 得护盾", skillDesc: "开场自带 1 个护盾，火苗不用于回血" },
+            { id: 2, name: "大块头", actor: "黎唯 饰", style: "特技武师", maxHp: 5, skillName: "重坦护盾", skillTrigger: "被动：火苗 ×5 得护盾；锤子 ×3 得护盾", skillDesc: "开场自带 1 个护盾，火苗不用于回血" },
             { id: 3, name: "阿德", actor: "雅彦·鲁伊安 饰", style: "班卡苏拉", maxHp: 3, skillName: "猎杀时刻", skillTrigger: "锤子 ×3 触发", skillDesc: "移动速度略快；清空管道，并磁吸 3 秒内沿途锤子和火苗" },
             { id: 4, name: "柏龙", actor: "岩永丞威 饰", style: "极真空手道", maxHp: 3, skillName: "子弹时间", skillTrigger: "锤子 ×2 触发", skillDesc: "进入 5 秒子弹时间，全局速度减半" },
             { id: 5, name: "王雨晴", actor: "杨恩又 饰", style: "勇敢之心", maxHp: 2, skillName: "无敌模式", skillTrigger: "锤子 ×1 触发", skillDesc: "触发后进入 8 秒完全无敌，不改变身体大小" },
