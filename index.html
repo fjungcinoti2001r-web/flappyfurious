@@ -1146,7 +1146,7 @@
             const charUnlocked = isCharacterUnlocked(charIndex);
             const isEasterEgg = charIndex >= 5;
             const enNames = ['Wang Wei', 'Navin', 'Big Guy', 'Tak', 'Paklung', 'Rainy', 'Kenji Tanigaki'];
-            const enActors = ['Xie Miao', 'Iko Uwais', 'Li Wei', 'Yayan Ruhian', 'Joey Iwanaga', 'Yang Enyou', 'Action Director'];
+            const enActors = ['Xie Miao', 'Joe Taslim', 'Li Wei', 'Yayan Ruhian', 'Joey Iwanaga', 'Yang Enyou', 'Action Director'];
             const displayName = charUnlocked ? (currentLang === 'en' ? enNames[charIndex] : char.name) : (isEasterEgg ? '???' : (currentLang === 'en' ? 'Unknown Character' : '未知角色'));
             const displayActor = charUnlocked ? (currentLang === 'en' ? `${enActors[charIndex]} as ${enNames[charIndex]}` : char.actor) : (isEasterEgg ? '???' : (currentLang === 'en' ? 'Uncredited' : '信息未公开'));
             const statusBadge = document.getElementById('char-status-badge');
