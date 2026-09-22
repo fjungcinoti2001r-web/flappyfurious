@@ -202,7 +202,7 @@
         #gameCanvas { visibility: hidden; }
         @keyframes hammer-hud-pop { 0% { transform: scale(1); } 35% { transform: scale(1.28) translateY(-3px); } 70% { transform: scale(.92); } 100% { transform: scale(1); } }
         #hud-hammer.hammer-pop { animation: hammer-hud-pop .45s ease-out; }
-        #skill-countdown { position: absolute; left: 18px; bottom: 24px; z-index: 25; width: 58px; height: 58px; color: rgba(255, 209, 102, .62); font: 900 48px/.95 'Teko', sans-serif; text-align: center; text-shadow: 0 0 12px rgba(255, 120, 35, .38); pointer-events: none; }
+        #skill-countdown { position: absolute; left: 18px; bottom: 24px; z-index: 25; width: 58px; height: 58px; color: rgba(255, 209, 102, .30); font: 900 48px/.95 'Teko', sans-serif; text-align: center; text-shadow: 0 0 12px rgba(255, 120, 35, .38); pointer-events: none; }
         #lobby-view .char-help { width: 100%; margin-top: 10px; padding: 8px 10px; border: 1px solid rgba(236, 170, 64, .35); border-radius: 10px; background: rgba(6, 14, 18, .78); text-align: left; font-size: 10px; line-height: 1.55; }
         #lobby-view .char-help strong { color: #ffb52e; }
         #lobby-view .scene-picker { width: 100%; margin-top: 9px; padding: 7px 9px; border: 1px solid rgba(130, 200, 183, .45); border-radius: 9px; background: rgba(2, 17, 18, .9); color: #dbeee4; font-size: 11px; font-weight: 700; }
@@ -403,8 +403,10 @@
         <div id="tutorial-modal" class="hidden absolute inset-0 flex items-center justify-center p-5 bg-black/85 backdrop-blur-md">
             <div class="tutorial-card">
                 <div class="text-center text-xl font-black text-amber-300 mb-1">🔥 游戏说明</div>
-                <div class="text-center text-[11px] text-slate-400 mb-3">控制角色穿过管道，收集火苗和锤子</div>
-                <div class="tutorial-row"><b class="text-white">操作：</b>点击屏幕 / 空格键上升</div>
+                <div class="text-center text-[11px] text-slate-400 mb-3">控制角色穿过管道，收集火苗和锤子<br>
+    得分无上限，所有角色、所有场景全解锁视为通关！
+</div>
+                <div class="tutorial-row"><b class="text-white">操作：</b>点击屏幕控制角色</div>
                 <div class="tutorial-row"><b class="text-orange-300">🔥 火苗：</b>普通角色收集 5 个恢复 1 滴血，大块头收集 10 个获得 1 个护盾</div>
                 <div class="tutorial-row"><b class="text-amber-300">🔨 锤子：</b>按角色所需数量触发专属技能</div>
                 <div class="tutorial-row"><b class="text-red-300">⚠️ 注意：</b>撞击管道或边界会损失生命</div>
