@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FLAPPY FURIOUS</title>
+    <title>火遮眼：怒火突围（双BGM自动切换终极版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Teko:wght@600;700&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -262,7 +262,7 @@
                 <div class="loading-credit"><img src="avatar-logo.png" alt="avatar logo"><span>演员谢苗超话</span></div>
                 <div class="loading-maker">制作：林科森</div>
             </div>
-            <div class="text-[10px] text-slate-500">《火遮眼》粉丝向同人作品</div>
+            <div class="text-[10px] text-slate-500">《火遮眼》动作闯关原型 · 粉丝向作品</div>
         </div>
 
         <!-- 2. 主菜单 / 选人大厅页面 (播放 bgm_01) -->
@@ -280,7 +280,7 @@
                 </div>
                 <div class="title-flappy">FLAPPY</div>
                 <div class="title-furious">FURIOUS</div>
-                <p class="text-[11px] text-slate-300 mt-2 font-medium tracking-wide">粉丝向同人作品</p>
+                <p class="text-[11px] text-slate-300 mt-2 font-medium tracking-wide">《火遮眼》粉丝向动作闯关原型 · 非官方作品</p>
             </div>
 
             <div class="relative w-full bg-slate-900/85 border border-slate-700/80 rounded-3xl p-4 shadow-2xl my-auto">
@@ -297,8 +297,8 @@
                             <canvas id="char-preview-canvas" width="96" height="96" class="rounded-2xl bg-slate-950/90 border border-slate-700"></canvas>
                         </div>
                         <h3 id="char-name" class="text-base font-black text-white">王伟</h3>
-                        <span id="char-actor" class="text-[10px] text-slate-300">WANG WEI</span>
-                        <div class="char-help"><strong id="char-skill-trigger">锤子 ×1 触发</strong><br><span id="char-skill-effect">怒火遮眼：清除前方最近的管道障碍</span></div>
+                        <span id="char-actor" class="text-[10px] text-slate-300">谢苗 饰</span>
+                        <div class="char-help"><strong id="char-skill-trigger">锤子 ×1 触发</strong><br><span id="char-skill-effect">怒拳连打：清除前方最近的管道障碍</span></div>
                         <select id="scene-picker" class="scene-picker" aria-label="选择场景"></select>
                     </div>
 
@@ -320,10 +320,10 @@
             <div class="flex justify-between items-start">
                 <div class="flex flex-col gap-1">
                     <div id="hud-stage-badge" class="px-2.5 py-1 rounded bg-red-950/80 border border-red-500/50 text-[11px] font-black text-red-300 shadow">
-                        火车追逐
+                        第一幕：夜雨追凶
                     </div>
                     <div id="hud-char-badge" class="px-2 py-0.5 rounded bg-slate-900/80 border border-slate-700 text-[10px] text-amber-400 font-bold">
-                        王伟 · 怒火遮眼
+                        王伟 · 双拳
                     </div>
                 </div>
 
@@ -369,7 +369,7 @@
                 <div id="final-context" class="hidden">王伟 · 货车追逐</div>
                 <div id="final-score" class="hidden">0</div><div id="final-best" class="hidden">0</div>
                 <button id="btn-retry" class="w-full py-3.5 rounded-xl bg-red-600 text-white font-black text-sm mb-2 active:scale-95 transition">🔄 再次出击</button>
-                <button id="btn-return-lobby" class="w-full py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs active:scale-95 transition">👥 返回大厅</button>
+                <button id="btn-return-lobby" class="w-full py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs active:scale-95 transition">👥 返回选人大厅</button>
             </div>
         </div>
 
@@ -498,13 +498,13 @@
         const audio = new SoundEngine();
 
         const CHARACTERS = [
-            { id: 0, name: "王伟", actor: "谢苗 饰", style: "近身重拳", weapon: "怒火遮眼", maxHp: 3, skillName: "怒拳连打", skillTrigger: "锤子 ×1 触发", skillDesc: "挥出重拳，清除前方最近的管道障碍" },
-            { id: 1, name: "纳文", actor: "林科灯 饰", style: "正统柔道", weapon: "柔道擒抱", maxHp: 3, skillName: "幽灵穿墙", skillTrigger: "锤子 ×3 触发", skillDesc: "进入 5 秒幽灵化，期间无视管道碰撞" },
-            { id: 2, name: "大块头", actor: "黎唯 饰", style: "防爆重装", weapon: "重铠护盾", maxHp: 5, skillName: "重坦护盾", skillTrigger: "被动：火苗 ×5 得护盾；锤子 ×3 得护盾", skillDesc: "开场自带 1 个护盾，火苗不用于回血" },
-            { id: 3, name: "阿德", actor: "雅彦·鲁伊安 饰", style: "班卡苏拉", weapon: "穿心猎箭", maxHp: 3, skillName: "全屏清障与吸金", skillTrigger: "锤子 ×3 触发", skillDesc: "移动速度略快；清空管道，并磁吸 3 秒内沿途锤子和火苗" },
-            { id: 4, name: "柏龙", actor: "岩永丞威 饰", style: "空手道大师", weapon: "时间减速", maxHp: 3, skillName: "子弹时间", skillTrigger: "锤子 ×2 触发", skillDesc: "进入 5 秒子弹时间，全局速度减半" },
-            { id: 5, name: "王雨晴", actor: "杨恩又 饰", style: "纯真执念", weapon: "父亲残影", maxHp: 2, skillName: "无敌状态", skillTrigger: "锤子 ×1 触发", skillDesc: "触发后进入 8 秒完全无敌，不改变身体大小" },
-            { id: 6, name: "谷垣健治", actor: "导演", style: "动作片", weapon: "导演无敌", maxHp: 4, skillName: "上帝视角", skillTrigger: "锤子 ×3 触发", skillDesc: "5 秒自动高速无敌飞行，并吸取锤子和火苗" }
+            { id: 0, name: "王伟", actor: "谢苗 饰", style: "近身重拳", maxHp: 3, skillName: "怒拳连打", skillTrigger: "锤子 ×1 触发", skillDesc: "挥出重拳，清除前方最近的管道障碍" },
+            { id: 1, name: "纳文", actor: "乔·塔斯利姆 饰", style: "正统柔道", maxHp: 3, skillName: "幽灵穿墙", skillTrigger: "锤子 ×3 触发", skillDesc: "进入 5 秒幽灵化，期间无视管道碰撞" },
+            { id: 2, name: "大块头", actor: "怪力狂人", style: "防爆重装", maxHp: 5, skillName: "重坦护盾", skillTrigger: "被动：火苗 ×5 得护盾；锤子 ×3 得护盾", skillDesc: "开场自带 1 个护盾，火苗不用于回血" },
+            { id: 3, name: "阿德", actor: "雅彦·鲁伊安 饰", style: "班卡苏拉", maxHp: 3, skillName: "全屏清障与吸金", skillTrigger: "锤子 ×3 触发", skillDesc: "移动速度略快；清空管道，并磁吸 3 秒内沿途锤子和火苗" },
+            { id: 4, name: "柏龙", actor: "极恶巨头", style: "空手道大师", maxHp: 3, skillName: "子弹时间", skillTrigger: "锤子 ×2 触发", skillDesc: "进入 5 秒子弹时间，全局速度减半" },
+            { id: 5, name: "王雨晴", actor: "杨恩又 饰", style: "纯真执念", maxHp: 2, skillName: "残影无敌", skillTrigger: "锤子 ×1 触发", skillDesc: "触发后进入 8 秒完全无敌，不改变身体大小" },
+            { id: 6, name: "谷垣健治", actor: "动作导演", style: "倒带调度", maxHp: 4, skillName: "导演自动无敌飞行", skillTrigger: "锤子 ×3 触发", skillDesc: "5 秒自动高速无敌飞行，并吸取锤子和火苗" }
         ];
 
         const CHARACTER_IMAGES = {
@@ -1063,7 +1063,7 @@
             updateHud() {
                 document.getElementById('hud-score').textContent = this.score;
                 document.getElementById('hud-best-small').textContent = "BEST: " + dataMgr.bestScore;
-                document.getElementById('hud-char-badge').textContent = this.activeChar.name + " · " + this.activeChar.weapon;
+                document.getElementById('hud-char-badge').textContent = this.activeChar.name;
                 document.getElementById('hud-health').textContent = '♥ '.repeat(this.currentHp).trim();
                 const flameGoal = dataMgr.selectedChar === 2 ? 10 : 5;
                 document.getElementById('hud-flame').textContent = `🔥 ${this.flameCount}/${flameGoal}`;
