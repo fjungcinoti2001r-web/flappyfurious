@@ -543,7 +543,30 @@
         let failedPaths = [];
         let selectedSceneId = localStorage.getItem('flappySelectedScene') || 'wangwei';
         let totalStoreHammers = Number(localStorage.getItem('flappyStoreHammers') || 0);
-        const unlockedScenes = new Set(SCENES.map(scene => scene.id));
+        const unlockedScenes = new Set(JSON.parse(localStorage.getItem('flappyUnlockedScenesFormal') || '["wangwei"]'));
+        const SCORE_UNLOCKS = [0, 25, 50, 75, 100];
+        const getCumulativeScore = () => Number(localStorage.getItem('flappyCumulativeScore') || 0);
+        const getDeathCounts = () => JSON.parse(localStorage.getItem('flappyDeathCounts') || '{}');
+        function isCharacterUnlocked(index) {
+            const deaths = getDeathCounts(), cumulative = getCumulativeScore();
+            if (index === 0) return true;
+            if (index <= 4) return cumulative >= SCORE_UNLOCKS[index];
+            if (index === 5) return [1,2,3,4].every(i => isCharacterUnlocked(i)) && (deaths[0] || 0) >= 5;
+            return isCharacterUnlocked(5) && [0,1,2,3,4,5].every(i => (deaths[i] || 0) >= 1);
+        }
+        function characterUnlockCondition(index) {
+            if (index === 1) return '累计得分达到 25 分';
+            if (index === 2) return '累计得分达到 50 分';
+            if (index === 3) return '累计得分达到 75 分';
+            if (index === 4) return '累计得分达到 100 分';
+            if (index === 5) return '前 5 名角色全部解锁，且王伟累计死亡 5 次';
+            if (index === 6) return '王雨晴解锁，且前 6 名角色都至少死亡 1 次';
+            return '默认解锁';
+        }
+        function refreshUnlocks() {
+            for (let i=0;i<CHARACTERS.length;i++) if (isCharacterUnlocked(i)) unlockedScenes.add(SCENES[i].id);
+            saveSceneState();
+        }
 
         function preloadAssets() {
             const loadingText = document.getElementById('loading-text');
@@ -875,6 +898,11 @@
 
             die() {
                 this.state = 'GAMEOVER';
+                const deaths = getDeathCounts();
+                deaths[dataMgr.selectedChar] = (deaths[dataMgr.selectedChar] || 0) + 1;
+                localStorage.setItem('flappyDeathCounts', JSON.stringify(deaths));
+                localStorage.setItem('flappyCumulativeScore', String(getCumulativeScore() + this.score));
+                refreshUnlocks();
                 totalStoreHammers += this.hammerCount;
                 localStorage.setItem('flappyStoreHammers', String(totalStoreHammers));
                 if (this.score > dataMgr.bestScore) dataMgr.bestScore = this.score;
@@ -1060,35 +1088,43 @@
         window.__game = game;
 
         function updateCharacterCard() {
-            const char = CHARACTERS[dataMgr.selectedChar];
+            refreshUnlocks();
+            const charIndex = dataMgr.selectedChar;
+            const char = CHARACTERS[charIndex];
+            const charUnlocked = isCharacterUnlocked(charIndex);
+            const isEasterEgg = charIndex >= 5;
+            const displayName = charUnlocked ? char.name : (isEasterEgg ? '？？？' : '未知角色');
+            const displayActor = charUnlocked ? char.actor : (isEasterEgg ? '？？？' : '信息未公开');
+            const statusBadge = document.getElementById('char-status-badge');
+            if (statusBadge) { statusBadge.textContent = charUnlocked ? '已解锁' : '未解锁'; statusBadge.className = charUnlocked ? 'px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'px-2 py-0.5 rounded text-[10px] font-black bg-slate-500/20 text-slate-400 border border-slate-500/30'; }
             document.getElementById('char-index-indicator').textContent = `${dataMgr.selectedChar + 1}/7`;
-            document.getElementById('char-name').textContent = char.name;
-            document.getElementById('char-actor').textContent = char.actor;
-            document.getElementById('char-skill-trigger').textContent = char.skillTrigger || '专属技能';
-            document.getElementById('char-skill-effect').textContent = `${char.skillName}：${char.skillDesc}`;
+            document.getElementById('char-name').textContent = displayName;
+            document.getElementById('char-actor').textContent = displayActor;
+            document.getElementById('char-skill-trigger').textContent = charUnlocked ? (char.skillTrigger || '专属技能') : (isEasterEgg ? '？？？' : `解锁条件：${characterUnlockCondition(charIndex)}`);
+            document.getElementById('char-skill-effect').textContent = charUnlocked ? `${char.skillName}：${char.skillDesc}` : (isEasterEgg ? '？？？' : characterUnlockCondition(charIndex));
             const charSceneIndex = dataMgr.selectedChar;
             const currentSceneIndex = SCENES.findIndex(s => s.id === selectedSceneId);
-            if (currentSceneIndex < 0 || currentSceneIndex > charSceneIndex) selectedSceneId = SCENES[charSceneIndex].id;
+            if (currentSceneIndex < 0 || !unlockedScenes.has(selectedSceneId)) selectedSceneId = unlockedScenes.has(SCENES[charSceneIndex].id) ? SCENES[charSceneIndex].id : 'wangwei';
             const scenePicker = document.getElementById('scene-picker');
             if (scenePicker) {
-                scenePicker.innerHTML = SCENES.map((scene, index) => `<option value="${scene.id}" ${index > charSceneIndex ? 'disabled' : ''}>${index > charSceneIndex ? '🔒 ' : '✓ '}${scene.name}${index > charSceneIndex ? ' · 角色解锁后可用' : ''}</option>`).join('');
+                scenePicker.innerHTML = SCENES.map(scene => { const available = unlockedScenes.has(scene.id); return `<option value="${scene.id}" ${available ? '' : 'disabled'}>${available ? '✓ ' + scene.name : '🔒 ？？？'}</option>`; }).join('');
                 scenePicker.value = selectedSceneId;
                 scenePicker.onchange = () => { selectedSceneId = scenePicker.value; saveSceneState(); updateCharacterCard(); };
             }
 
             const prevCtx = document.getElementById('char-preview-canvas').getContext('2d');
             prevCtx.clearRect(0, 0, 96, 96);
-            const staticImg = ASSET_CACHE[CHARACTER_IMAGES[char.id]];
+            const staticImg = charUnlocked ? ASSET_CACHE[CHARACTER_IMAGES[char.id]] : null;
             if (staticImg && staticImg.complete && staticImg.naturalWidth > 0) {
                 prevCtx.drawImage(staticImg, 0, 0, staticImg.naturalWidth, staticImg.naturalHeight, 0, 0, 96, 96);
             } else {
-                prevCtx.fillStyle = '#ef4444'; prevCtx.beginPath(); prevCtx.arc(48, 48, 24, 0, Math.PI * 2); prevCtx.fill();
+                prevCtx.fillStyle = '#172022'; prevCtx.fillRect(0, 0, 96, 96); prevCtx.fillStyle = '#94a3a8'; prevCtx.font = 'bold 22px Arial'; prevCtx.textAlign = 'center'; prevCtx.fillText(isEasterEgg ? '？？？' : '锁定', 48, 55);
             }
         }
 
         function saveSceneState() {
             localStorage.setItem('flappySelectedScene', selectedSceneId);
-            localStorage.setItem('flappyUnlockedScenes', JSON.stringify([...unlockedScenes]));
+            localStorage.setItem('flappyUnlockedScenesFormal', JSON.stringify([...unlockedScenes]));
         }
         function renderStore() {
             document.getElementById('store-hammers').textContent = totalStoreHammers;
@@ -1096,12 +1132,13 @@
                 const unlocked = unlockedScenes.has(scene.id);
                 const selected = selectedSceneId === scene.id;
                 const missing = !ASSET_CACHE[scene.top] || !ASSET_CACHE[scene.bottom];
-                const label = missing ? '素材待补齐' : selected ? '使用中' : unlocked ? '使用场景' : '5 锤子兑换';
-                return `<div class="scene-row"><span>${scene.name}<br><small class="text-slate-500">${missing ? '上下障碍物素材未找到' : unlocked ? '已解锁' : '需要累计锤子 ×5'}</small></span><button data-scene="${scene.id}" ${missing || (unlocked && selected) ? 'disabled' : ''}>${label}</button></div>`;
+                const label = missing ? '素材待补齐' : selected ? '使用中' : unlocked ? '已兑换' : '50 锤子兑换';
+                const publicName = unlocked ? scene.name : '？？？';
+                return `<div class="scene-row"><span>${publicName}<br><small class="text-slate-500">${missing ? '上下障碍物素材未找到' : unlocked ? '已兑换' : '需要累计锤子 ×50'}</small></span><button data-scene="${scene.id}" ${missing || (unlocked && selected) ? 'disabled' : ''}>${label}</button></div>`;
             }).join('');
             document.querySelectorAll('#store-scene-list button[data-scene]').forEach(btn => btn.addEventListener('click', () => {
                 const id = btn.dataset.scene;
-                if (!unlockedScenes.has(id)) { if (totalStoreHammers < 5) return; totalStoreHammers -= 5; unlockedScenes.add(id); }
+                if (!unlockedScenes.has(id)) { if (totalStoreHammers < 50) return; totalStoreHammers -= 50; unlockedScenes.add(id); }
                 selectedSceneId = id; saveSceneState(); renderStore(); updateCharacterCard();
             }));
         }
@@ -1135,6 +1172,7 @@
             audio.playGameBgm();
         }
         document.getElementById('btn-start-game').addEventListener('click', () => {
+            if (!isCharacterUnlocked(dataMgr.selectedChar)) { updateCharacterCard(); return; }
             if (localStorage.getItem('flappyTutorialDone') === '1') { audio.init(); game.initGame(); audio.playGameBgm(); }
             else tutorialModal.classList.remove('hidden');
         });
