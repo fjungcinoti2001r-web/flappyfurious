@@ -103,8 +103,9 @@
             animation: lobby-fire-drift 9s ease-in-out infinite alternate;
         }
         @keyframes lobby-fire-drift {
-            0% { background-position: 0% 70%, 0 0; opacity: .72; }
-            100% { background-position: 100% 30%, 0 0; opacity: 1; }
+            0% { background-position: 0% 70%, 0 0; opacity: .58; filter: brightness(.92); transform: scale(1.03) translate3d(-0.8%, 0, 0); }
+            50% { background-position: 55% 45%, 0 0; opacity: .95; filter: brightness(1.08); transform: scale(1.07) translate3d(0.5%, -0.5%, 0); }
+            100% { background-position: 100% 30%, 0 0; opacity: .68; filter: brightness(.96); transform: scale(1.03) translate3d(0.8%, 0.4%, 0); }
         }
         @keyframes lobby-flame-title {
             0%, 100% { background-position: 0% 50%; filter: drop-shadow(0 0 4px rgba(239, 68, 36, .22)); }
@@ -239,6 +240,28 @@
             from { transform: translateY(1px) scale(.92) rotate(-4deg); filter: drop-shadow(0 0 2px #f97316); }
             to { transform: translateY(-2px) scale(1.12) rotate(4deg); filter: drop-shadow(0 0 8px #ffd166); }
         }
+        /* Compact lobby layout: keep the complete lobby visible without vertical scrolling. */
+        #lobby-view { overflow: hidden !important; gap: 5px !important; padding: 12px 12px 10px !important; }
+        #lobby-view::before { will-change: transform, opacity, background-position, filter; animation: lobby-fire-drift 10s ease-in-out infinite alternate !important; }
+        #lobby-view > .text-center { margin: 5px 0 7px !important; }
+        #lobby-view .title-flappy { font-size: clamp(2.9rem, 12vw, 4.2rem); }
+        #lobby-view .title-furious { font-size: clamp(3.1rem, 13vw, 4.7rem); }
+        #lobby-view #lobby-disclaimer { margin-top: 4px !important; line-height: 1.25 !important; }
+        #lobby-view #lobby-description { margin-top: 5px !important; padding: 5px 8px !important; line-height: 1.25 !important; }
+        #lobby-view > .relative.w-full { margin: 0 0 4px !important; padding: 9px 10px !important; border-radius: 18px !important; }
+        #lobby-view #char-preview-canvas { width: 72px; height: 72px; }
+        #lobby-view .relative.w-24 { width: 72px; height: 72px; margin-bottom: 2px !important; }
+        #lobby-view .char-help { margin-top: 4px !important; padding: 5px 7px !important; font-size: 9px !important; line-height: 1.25 !important; }
+        #lobby-view .scene-picker { margin-top: 4px !important; padding: 5px 7px !important; }
+        #lobby-view > #btn-start-game { position: relative !important; bottom: auto !important; flex: 0 0 auto !important; min-height: 48px; padding-top: 8px !important; padding-bottom: 8px !important; margin-top: 4px !important; margin-bottom: 0 !important; }
+        #lobby-view > #btn-start-game + * { display: none !important; }
+        @media (max-height: 720px) {
+            #lobby-view { padding-top: 7px !important; }
+            #lobby-view > .text-center { margin: 1px 0 4px !important; }
+            #lobby-view #lobby-description { display: none; }
+            #lobby-view #char-preview-canvas { width: 62px; height: 62px; }
+            #lobby-view .relative.w-24 { width: 62px; height: 62px; }
+        }
     </style>
 </head>
 <body class="w-screen h-screen flex items-center justify-center bg-black select-none text-slate-100">
@@ -281,12 +304,13 @@
                 </div>
                 <div class="title-flappy">FLAPPY</div>
                 <div class="title-furious">FURIOUS</div>
-                <p class="text-[10px] text-slate-300 mt-2 font-medium tracking-wide text-center leading-relaxed">本作品为粉丝自制同人游戏，仅供交流与非商业用途。<br>本作与原作及其版权方无官方关联，不代表原作版权方立场。</p>
+                <p id="lobby-disclaimer" class="text-[10px] text-slate-300 mt-2 font-medium tracking-wide text-center leading-relaxed">本作品为粉丝自制同人游戏，仅供交流与非商业用途。<br>本作与原作及其版权方无官方关联，不代表原作版权方立场。</p>
+                <p id="lobby-description" class="max-w-[360px] mt-3 px-3 py-2 rounded-lg bg-black/25 border border-slate-600/40 text-[10px] text-slate-200 font-medium leading-relaxed text-center">控制角色穿过障碍，收集火苗与锤子，触发专属技能并挑战最高分。解锁全部角色与场景，完成最终挑战！</p>
             </div>
 
             <div class="relative w-full bg-slate-900/85 border border-slate-700/80 rounded-3xl p-4 shadow-2xl my-auto">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-[11px] font-black text-slate-300 uppercase tracking-wider">选择参战人员 (<span id="char-index-indicator">1/7</span>)</span>
+                    <span id="char-select-label" class="text-[11px] font-black text-slate-300 uppercase tracking-wider">选择参战人员 (<span id="char-index-indicator">1/7</span>)</span>
                     <span id="char-status-badge" class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">已就绪</span>
                 </div>
 
@@ -382,6 +406,7 @@
                     <button id="btn-close-settings" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center font-bold text-sm">✕</button>
                 </div>
                 <div class="space-y-3 text-xs">
+                    <div class="flex items-center justify-between"><span class="text-slate-300 font-bold">🌐 Language / 语言</span><select id="language-select" class="px-2 py-1 rounded-lg bg-slate-800 text-white font-bold border border-slate-700"><option value="zh">中文</option><option value="en">English</option></select></div>
                     <div class="flex items-center justify-between">
                         <span class="text-slate-300 font-bold">🔊 角色音效 (SFX)</span>
                         <button id="toggle-sfx" class="px-3 py-1 rounded-lg bg-red-600 text-white font-bold transition">开启</button>
@@ -559,6 +584,15 @@
             return isCharacterUnlocked(5) && [0,1,2,3,4,5].every(i => (deaths[i] || 0) >= 1);
         }
         function characterUnlockCondition(index) {
+            if (typeof currentLang !== 'undefined' && currentLang === 'en') {
+                if (index === 1) return 'Reach a cumulative score of 25';
+                if (index === 2) return 'Reach a cumulative score of 50';
+                if (index === 3) return 'Reach a cumulative score of 75';
+                if (index === 4) return 'Reach a cumulative score of 100';
+                if (index === 5) return 'Unlock the first 5 characters and let Wang Wei die 5 times';
+                if (index === 6) return 'Unlock Wang Yuqing and let the first 6 characters die once each';
+                return 'Unlocked by default';
+            }
             if (index === 1) return '累计得分达到 25 分';
             if (index === 2) return '累计得分达到 50 分';
             if (index === 3) return '累计得分达到 75 分';
@@ -1066,7 +1100,10 @@
             updateHud() {
                 document.getElementById('hud-score').textContent = this.score;
                 document.getElementById('hud-best-small').textContent = "BEST: " + dataMgr.bestScore;
-                document.getElementById('hud-char-badge').textContent = this.activeChar.name;
+                const enHudNames = ['Wang Wei · Fury Blaze', 'Navin · Ghost Walk', 'Big Guy · Heavy Shield', 'Tak · Hunting Hour', 'Paklung · Bullet Time', 'Rainy · Invincible Mode', 'Kenji Tanigaki · God View'];
+                const enHudScenes = ['TRUCK CHASE', 'CAGE FIGHT', 'ICE FACTORY', 'POLICE STATION', 'RAINY STREETS', 'SNAKE CAVE', 'FILM SET'];
+                document.getElementById('hud-char-badge').textContent = currentLang === 'en' ? enHudNames[dataMgr.selectedChar] : this.activeChar.name;
+                document.getElementById('hud-stage-badge').textContent = currentLang === 'en' ? enHudScenes[dataMgr.selectedChar] : (this.activeScene.name.split(' · ')[1] || this.activeScene.name);
                 document.getElementById('hud-health').textContent = '♥ '.repeat(this.currentHp).trim();
                 const flameGoal = dataMgr.selectedChar === 2 ? 10 : 5;
                 const flameHud = document.getElementById('hud-flame');
@@ -1098,21 +1135,26 @@
             const char = CHARACTERS[charIndex];
             const charUnlocked = isCharacterUnlocked(charIndex);
             const isEasterEgg = charIndex >= 5;
-            const displayName = charUnlocked ? char.name : (isEasterEgg ? '？？？' : '未知角色');
-            const displayActor = charUnlocked ? char.actor : (isEasterEgg ? '？？？' : '信息未公开');
+            const enNames = ['Wang Wei', 'Navin', 'Big Guy', 'Tak', 'Paklung', 'Rainy', 'Kenji Tanigaki'];
+            const enActors = ['Xie Miao', 'Iko Uwais', 'Li Wei', 'Yayan Ruhian', 'Joey Iwanaga', 'Yang Enyou', 'Action Director'];
+            const displayName = charUnlocked ? (currentLang === 'en' ? enNames[charIndex] : char.name) : (isEasterEgg ? '???' : (currentLang === 'en' ? 'Unknown Character' : '未知角色'));
+            const displayActor = charUnlocked ? (currentLang === 'en' ? `${enActors[charIndex]} as ${enNames[charIndex]}` : char.actor) : (isEasterEgg ? '???' : (currentLang === 'en' ? 'Uncredited' : '信息未公开'));
             const statusBadge = document.getElementById('char-status-badge');
-            if (statusBadge) { statusBadge.textContent = charUnlocked ? '已解锁' : '未解锁'; statusBadge.className = charUnlocked ? 'px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'px-2 py-0.5 rounded text-[10px] font-black bg-slate-500/20 text-slate-400 border border-slate-500/30'; }
+            if (statusBadge) { statusBadge.textContent = charUnlocked ? (currentLang === 'en' ? 'UNLOCKED' : '已解锁') : (currentLang === 'en' ? 'LOCKED' : '未解锁'); statusBadge.className = charUnlocked ? 'px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'px-2 py-0.5 rounded text-[10px] font-black bg-slate-500/20 text-slate-400 border border-slate-500/30'; }
             document.getElementById('char-index-indicator').textContent = `${dataMgr.selectedChar + 1}/7`;
             document.getElementById('char-name').textContent = displayName;
             document.getElementById('char-actor').textContent = displayActor;
-            document.getElementById('char-skill-trigger').textContent = charUnlocked ? (char.skillTrigger || '专属技能') : (isEasterEgg ? '？？？' : `解锁条件：${characterUnlockCondition(charIndex)}`);
-            document.getElementById('char-skill-effect').textContent = charUnlocked ? `${char.skillName}：${char.skillDesc}` : (isEasterEgg ? '？？？' : characterUnlockCondition(charIndex));
+            const enSkillNames = ['Fury Blaze', 'Ghost Walk', 'Heavy Shield', 'Hunting Hour', 'Bullet Time', 'Invincible Mode', 'God View'];
+            const enSkillDesc = ['Throws a powerful punch and clears the nearest obstacle', 'Becomes a ghost for 5 seconds and ignores pipe collisions', 'Starts with one shield; flames do not restore HP', 'Moves faster, clears pipes and magnetically collects items for 3 seconds', 'Enters bullet time for 5 seconds; global speed is halved', 'Becomes completely invincible for 8 seconds', 'Flies at high speed and collects hammers and flames for 5 seconds'];
+            document.getElementById('char-skill-trigger').textContent = charUnlocked ? (currentLang === 'en' ? `Hammer ×${[1,3,3,3,2,1,3][charIndex]} to activate` : (char.skillTrigger || '专属技能')) : (isEasterEgg ? '???' : (currentLang === 'en' ? `Unlock condition: ${characterUnlockCondition(charIndex)}` : `解锁条件：${characterUnlockCondition(charIndex)}`));
+            document.getElementById('char-skill-effect').textContent = charUnlocked ? (currentLang === 'en' ? `${enSkillNames[charIndex]}: ${enSkillDesc[charIndex]}` : `${char.skillName}：${char.skillDesc}`) : (isEasterEgg ? '???' : characterUnlockCondition(charIndex));
             const charSceneIndex = dataMgr.selectedChar;
             const currentSceneIndex = SCENES.findIndex(s => s.id === selectedSceneId);
             if (currentSceneIndex < 0 || !canUseScene(selectedSceneId, charSceneIndex)) selectedSceneId = SCENES[charSceneIndex].id;
             const scenePicker = document.getElementById('scene-picker');
             if (scenePicker) {
-                scenePicker.innerHTML = SCENES.map((scene, index) => { const available = canUseScene(scene.id, charSceneIndex) && isCharacterUnlocked(index); return `<option value="${scene.id}" ${available ? '' : 'disabled'}>${available ? '✓ ' + scene.name : '🔒 ？？？'}</option>`; }).join('');
+                const enScenes = ['Wang Wei · Truck Chase', 'Navin · Cage Fight', 'Big Guy · Ice Factory', 'Tak · Police Station', 'Paklung · Rainy Streets', 'Rainy · Snake Cave', 'Kenji Tanigaki · Film Set'];
+                scenePicker.innerHTML = SCENES.map((scene, index) => { const available = canUseScene(scene.id, charSceneIndex) && isCharacterUnlocked(index); const sceneName = currentLang === 'en' ? enScenes[index] : scene.name; return `<option value="${scene.id}" ${available ? '' : 'disabled'}>${available ? '✓ ' + sceneName : '🔒 ???'}</option>`; }).join('');
                 scenePicker.value = selectedSceneId;
                 scenePicker.onchange = () => { selectedSceneId = scenePicker.value; saveSceneState(); updateCharacterCard(); };
             }
@@ -1133,12 +1175,13 @@
         }
         function renderStore() {
             document.getElementById('store-hammers').textContent = totalStoreHammers;
+            const enScenes = ['Wang Wei · Truck Chase', 'Navin · Cage Fight', 'Big Guy · Ice Factory', 'Tak · Police Station', 'Paklung · Rainy Streets', 'Rainy · Snake Cave', 'Kenji Tanigaki · Film Set'];
             document.getElementById('store-scene-list').innerHTML = SCENES.map(scene => {
                 const unlocked = unlockedScenes.has(scene.id);
                 const purchased = purchasedScenes.has(scene.id);
                 const selected = selectedSceneId === scene.id;
                 const missing = !ASSET_CACHE[scene.top] || !ASSET_CACHE[scene.bottom];
-                const publicName = unlocked ? scene.name : '？？？';
+                const publicName = unlocked ? (currentLang === 'en' ? enScenes[SCENES.findIndex(item => item.id === scene.id)] : scene.name) : '???';
                 const label = missing ? '素材待补齐' : selected ? '使用中' : purchased ? '已兑换' : '50 锤子兑换';
                 return `<div class="scene-row"><span>${publicName}<br><small class="text-slate-500">${missing ? '上下障碍物素材未找到' : purchased ? '已兑换，全角色通用' : unlocked ? '角色专属场景' : '需要累计锤子 ×50'}</small></span><button data-scene="${scene.id}" ${missing || (purchased && selected) ? 'disabled' : ''}>${label}</button></div>`;
             }).join('');
@@ -1203,6 +1246,22 @@
         });
 
         const settingsModal = document.getElementById('settings-modal');
+        let currentLang = localStorage.getItem('flappyLanguage') || 'zh';
+        const LANG = { zh: { settings:'游戏设置', sfx:'🔊 角色音效 (SFX)', bgm:'🎵 背景音乐 (BGM)', volume:'🔉 音量', resume:'返回游戏', lobby:'返回大厅', on:'开启', off:'关闭', tutorial:'🔥 游戏说明', start:'开始游戏', back:'👥 返回游戏大厅', select:'选择参战人员', disclaimer:'本作品为粉丝自制同人游戏，仅供交流与非商业用途。<br>本作与原作及其版权方无官方关联，不代表原作版权方立场' }, en: { settings:'GAME SETTINGS', sfx:'🔊 Character SFX', bgm:'🎵 Background Music', volume:'🔉 Volume', resume:'RESUME GAME', lobby:'BACK TO LOBBY', on:'ON', off:'OFF', tutorial:'🔥 HOW TO PLAY', start:'START GAME', back:'👥 BACK TO LOBBY', select:'SELECT CHARACTER', disclaimer:'This is a fan-made game for communication and non-commercial use only.<br>Not affiliated with or endorsed by the original work or its copyright holders.' } };
+        const langText = key => LANG[currentLang][key];
+        function applyLanguage() {
+            const s = LANG[currentLang];
+            const set = (selector, value) => { const el = document.querySelector(selector); if (el) el.textContent = value; };
+            set('#settings-modal h3', s.settings); set('#btn-resume-game', s.resume); set('#btn-settings-lobby', s.lobby); set('#btn-return-lobby', s.back); set('#tutorial-modal .text-center.text-xl', s.tutorial); set('#btn-tutorial-start', s.start);
+            set('#toggle-sfx', audio.sfxEnabled ? s.on : s.off); set('#toggle-bgm', audio.bgmEnabled ? s.on : s.off);
+            const selectLabel = document.getElementById('char-select-label'); if (selectLabel) selectLabel.firstChild.textContent = s.select + ' (';
+            const disclaimer = document.getElementById('lobby-disclaimer'); if (disclaimer) disclaimer.innerHTML = s.disclaimer;
+            const description = document.getElementById('lobby-description'); if (description) description.textContent = currentLang === 'en' ? 'Guide your character through obstacles, collect flames and hammers, activate special skills, and chase the highest score. Unlock every character and scene to complete the challenge!' : '控制角色穿过障碍，收集火苗与锤子，触发专属技能并挑战最高分。解锁全部角色与场景，完成最终挑战！';
+            const rows = document.querySelectorAll('#settings-modal .space-y-3 > div > span'); if (rows[1]) rows[1].textContent = s.sfx; if (rows[2]) rows[2].textContent = s.bgm; if (rows[3]) rows[3].textContent = s.volume;
+            const select = document.getElementById('language-select'); if (select) select.value = currentLang;
+            if (typeof updateCharacterCard === 'function') updateCharacterCard();
+        }
+        document.getElementById('language-select').addEventListener('change', e => { currentLang = e.target.value; localStorage.setItem('flappyLanguage', currentLang); applyLanguage(); });
         function openSettings() {
             if (game.state === 'PLAYING') game.state = 'PAUSED';
             settingsModal.classList.remove('hidden');
@@ -1243,12 +1302,12 @@
 
         document.getElementById('toggle-sfx').addEventListener('click', (e) => {
             audio.sfxEnabled = !audio.sfxEnabled;
-            e.target.textContent = audio.sfxEnabled ? "开启" : "关闭";
+            e.target.textContent = audio.sfxEnabled ? langText('on') : langText('off');
             e.target.className = audio.sfxEnabled ? "px-3 py-1 rounded-lg bg-red-600 text-white font-bold transition" : "px-3 py-1 rounded-lg bg-slate-800 text-slate-400 font-bold transition";
         });
         document.getElementById('toggle-bgm').addEventListener('click', (e) => {
             audio.bgmEnabled = !audio.bgmEnabled;
-            e.target.textContent = audio.bgmEnabled ? "开启" : "关闭";
+            e.target.textContent = audio.bgmEnabled ? langText('on') : langText('off');
             e.target.className = audio.bgmEnabled ? "px-3 py-1 rounded-lg bg-red-600 text-white font-bold transition" : "px-3 py-1 rounded-lg bg-slate-800 text-slate-400 font-bold transition";
             if (!audio.bgmEnabled) audio.stopAllBgm();
             else audio.playLobbyBgm();
@@ -1280,6 +1339,7 @@
 
         window.onload = function() {
             preloadAssets();
+            applyLanguage();
             audio.playLobbyBgm();
             requestAnimationFrame(gameLoop);
         };
