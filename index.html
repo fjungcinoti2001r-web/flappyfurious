@@ -883,6 +883,8 @@
                             audio.playPickup();
                             if (p.hasHammer) {
                                 this.hammerCount++;
+                                totalStoreHammers++;
+                                localStorage.setItem('flappyStoreHammers', String(totalStoreHammers));
                                 if (this.hammerCount >= this.getSkillCost()) this.triggerAutoSkill();
                             } else if (dataMgr.selectedChar === 2) {
                                 this.flameForShield++;
@@ -950,8 +952,6 @@
                 localStorage.setItem('flappyDeathCounts', JSON.stringify(deaths));
                 localStorage.setItem('flappyCumulativeScore', String(getCumulativeScore() + this.score));
                 refreshUnlocks();
-                totalStoreHammers += this.hammerCount;
-                localStorage.setItem('flappyStoreHammers', String(totalStoreHammers));
                 if (this.score > dataMgr.bestScore) dataMgr.bestScore = this.score;
                 document.getElementById('final-score').textContent = this.score;
                 document.getElementById('final-best').textContent = dataMgr.bestScore;
@@ -1197,7 +1197,7 @@
             }).join('');
             document.querySelectorAll('#store-scene-list button[data-scene]').forEach(btn => btn.addEventListener('click', () => {
                 const id = btn.dataset.scene;
-                if (!purchasedScenes.has(id)) { if (totalStoreHammers < 50) return; totalStoreHammers -= 50; purchasedScenes.add(id); unlockedScenes.add(id); localStorage.setItem('flappyPurchasedScenesFormal', JSON.stringify([...purchasedScenes])); }
+                if (!purchasedScenes.has(id)) { if (totalStoreHammers < 50) return; totalStoreHammers -= 50; localStorage.setItem('flappyStoreHammers', String(totalStoreHammers)); purchasedScenes.add(id); unlockedScenes.add(id); localStorage.setItem('flappyPurchasedScenesFormal', JSON.stringify([...purchasedScenes])); }
                 selectedSceneId = id; saveSceneState(); renderStore(); updateCharacterCard();
             }));
         }
