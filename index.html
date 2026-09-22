@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>火遮眼：怒火突围（双BGM自动切换终极版）</title>
+    <title>FLAPPY FURIOUS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Teko:wght@600;700&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -277,7 +277,7 @@
 
             <div class="text-center my-auto py-1 flex flex-col items-center">
                 <div class="px-4 py-1 mb-2 rounded-full bg-stone-950/80 border border-red-800/80 text-[10px] font-bold text-red-400 tracking-wider uppercase shadow-md">
-                    HARDCORE ACTION EDITION · 全角色解锁测试版
+                    FAN-MADE GAME
                 </div>
                 <div class="title-flappy">FLAPPY</div>
                 <div class="title-furious">FURIOUS</div>
@@ -299,7 +299,7 @@
                         </div>
                         <h3 id="char-name" class="text-base font-black text-white">王伟</h3>
                         <span id="char-actor" class="text-[10px] text-slate-300">谢苗 饰</span>
-                        <div class="char-help"><strong id="char-skill-trigger">锤子 ×1 触发</strong><br><span id="char-skill-effect">怒拳连打：清除前方最近的管道障碍</span></div>
+                        <div class="char-help"><strong id="char-skill-trigger">锤子 ×1 触发</strong><br><span id="char-skill-effect">怒火遮眼：清除前方最近的管道障碍</span></div>
                         <select id="scene-picker" class="scene-picker" aria-label="选择场景"></select>
                     </div>
 
@@ -321,10 +321,10 @@
             <div class="flex justify-between items-start">
                 <div class="flex flex-col gap-1">
                     <div id="hud-stage-badge" class="px-2.5 py-1 rounded bg-red-950/80 border border-red-500/50 text-[11px] font-black text-red-300 shadow">
-                        第一幕：夜雨追凶
+                        货车追逐
                     </div>
                     <div id="hud-char-badge" class="px-2 py-0.5 rounded bg-slate-900/80 border border-slate-700 text-[10px] text-amber-400 font-bold">
-                        王伟 · 双拳
+                        王伟 · 怒火遮眼
                     </div>
                 </div>
 
@@ -369,8 +369,8 @@
                 <img id="gameover-share-image" alt="1比1游戏成绩单">
                 <div id="final-context" class="hidden">王伟 · 货车追逐</div>
                 <div id="final-score" class="hidden">0</div><div id="final-best" class="hidden">0</div>
-                <button id="btn-retry" class="w-full py-3.5 rounded-xl bg-red-600 text-white font-black text-sm mb-2 active:scale-95 transition">🔄 再次出击</button>
-                <button id="btn-return-lobby" class="w-full py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs active:scale-95 transition">👥 返回选人大厅</button>
+                <button id="btn-retry" class="w-full py-3.5 rounded-xl bg-red-600 text-white font-black text-sm mb-2 active:scale-95 transition">🔄 TRY AGAIN</button>
+                <button id="btn-return-lobby" class="w-full py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs active:scale-95 transition">👥 返回游戏大厅</button>
             </div>
         </div>
 
@@ -499,13 +499,13 @@
         const audio = new SoundEngine();
 
         const CHARACTERS = [
-            { id: 0, name: "王伟", actor: "谢苗 饰", style: "近身重拳", maxHp: 3, skillName: "怒拳连打", skillTrigger: "锤子 ×1 触发", skillDesc: "挥出重拳，清除前方最近的管道障碍" },
+            { id: 0, name: "王伟", actor: "谢苗 饰", style: "近身重拳", maxHp: 3, skillName: "怒火遮眼", skillTrigger: "锤子 ×1 触发", skillDesc: "挥出重拳，清除前方最近的管道障碍" },
             { id: 1, name: "纳文", actor: "乔·塔斯利姆 饰", style: "正统柔道", maxHp: 3, skillName: "幽灵穿墙", skillTrigger: "锤子 ×3 触发", skillDesc: "进入 5 秒幽灵化，期间无视管道碰撞" },
-            { id: 2, name: "大块头", actor: "怪力狂人", style: "防爆重装", maxHp: 5, skillName: "重坦护盾", skillTrigger: "被动：火苗 ×5 得护盾；锤子 ×3 得护盾", skillDesc: "开场自带 1 个护盾，火苗不用于回血" },
-            { id: 3, name: "阿德", actor: "雅彦·鲁伊安 饰", style: "班卡苏拉", maxHp: 3, skillName: "全屏清障与吸金", skillTrigger: "锤子 ×3 触发", skillDesc: "移动速度略快；清空管道，并磁吸 3 秒内沿途锤子和火苗" },
-            { id: 4, name: "柏龙", actor: "极恶巨头", style: "空手道大师", maxHp: 3, skillName: "子弹时间", skillTrigger: "锤子 ×2 触发", skillDesc: "进入 5 秒子弹时间，全局速度减半" },
-            { id: 5, name: "王雨晴", actor: "杨恩又 饰", style: "纯真执念", maxHp: 2, skillName: "残影无敌", skillTrigger: "锤子 ×1 触发", skillDesc: "触发后进入 8 秒完全无敌，不改变身体大小" },
-            { id: 6, name: "谷垣健治", actor: "动作导演", style: "倒带调度", maxHp: 4, skillName: "导演自动无敌飞行", skillTrigger: "锤子 ×3 触发", skillDesc: "5 秒自动高速无敌飞行，并吸取锤子和火苗" }
+            { id: 2, name: "大块头", actor: "黎唯姆 饰", style: "特技武师", maxHp: 5, skillName: "重坦护盾", skillTrigger: "被动：火苗 ×5 得护盾；锤子 ×3 得护盾", skillDesc: "开场自带 1 个护盾，火苗不用于回血" },
+            { id: 3, name: "阿德", actor: "雅彦·鲁伊安 饰", style: "班卡苏拉", maxHp: 3, skillName: "猎杀时刻", skillTrigger: "锤子 ×3 触发", skillDesc: "移动速度略快；清空管道，并磁吸 3 秒内沿途锤子和火苗" },
+            { id: 4, name: "柏龙", actor: "岩永丞威 饰", style: "极真空手道", maxHp: 3, skillName: "子弹时间", skillTrigger: "锤子 ×2 触发", skillDesc: "进入 5 秒子弹时间，全局速度减半" },
+            { id: 5, name: "王雨晴", actor: "杨恩又 饰", style: "勇敢之心", maxHp: 2, skillName: "无敌模式", skillTrigger: "锤子 ×1 触发", skillDesc: "触发后进入 8 秒完全无敌，不改变身体大小" },
+            { id: 6, name: "谷垣健治", actor: "动作导演", style: "CUT!", maxHp: 4, skillName: "上帝视角", skillTrigger: "锤子 ×3 触发", skillDesc: "5 秒自动高速无敌飞行，并吸取锤子和火苗" }
         ];
 
         const CHARACTER_IMAGES = {
@@ -524,11 +524,11 @@
 
         const SCENES = [
             { id: 'wangwei', name: '王伟 · 货车追逐', bg: 'assets/backgrounds/wangwei_truck.jfif', top: 'assets/pipes/wangwei_top-.png', bottom: 'assets/pipes/wangwei_bottom.png' },
-            { id: 'nawen', name: '纳文 · 铁笼仓库', bg: 'assets/backgrounds/nawen_cage.jfif', top: 'assets/pipes/nawen_top.png', bottom: 'assets/pipes/nawen_bottom.png' },
-            { id: 'dakuaitou', name: '大块头 · 冰冷工厂', bg: 'assets/backgrounds/dakuaitou_icefactory.jfif', top: 'assets/pipes/dakuaitou_top.png', bottom: 'assets/pipes/dakuaitou-bottom.png' },
-            { id: 'ade', name: '阿德 · 警察局追捕', bg: 'assets/backgrounds/ade_police_station.jfif', top: 'assets/pipes/ade_top.png', bottom: 'assets/pipes/ade_bottom.png' },
+            { id: 'nawen', name: '纳文 · 六角笼中', bg: 'assets/backgrounds/nawen_cage.jfif', top: 'assets/pipes/nawen_top.png', bottom: 'assets/pipes/nawen_bottom.png' },
+            { id: 'dakuaitou', name: '大块头 · 制冰厂', bg: 'assets/backgrounds/dakuaitou_icefactory.jfif', top: 'assets/pipes/dakuaitou_top.png', bottom: 'assets/pipes/dakuaitou-bottom.png' },
+            { id: 'ade', name: '阿德 · 血洗警署', bg: 'assets/backgrounds/ade_police_station.jfif', top: 'assets/pipes/ade_top.png', bottom: 'assets/pipes/ade_bottom.png' },
             { id: 'bailong', name: '柏龙 · 雨夜街头', bg: 'assets/backgrounds/bailong_rainfight.jpg', top: 'assets/pipes/bailong_top.png', bottom: 'assets/pipes/bailong_bottom.png' },
-            { id: 'wangyuqing', name: '王雨晴 · 蛇窟', bg: 'assets/backgrounds/wangyuqing_snake_cave.jfif', top: 'assets/pipes/wangyuqing_top.png', bottom: 'assets/pipes/wangyuqing_bottom.png' },
+            { id: 'wangyuqing', name: '王雨晴 · 蛇窟逃脱', bg: 'assets/backgrounds/wangyuqing_snake_cave.jfif', top: 'assets/pipes/wangyuqing_top.png', bottom: 'assets/pipes/wangyuqing_bottom.png' },
             { id: 'kenji', name: '谷垣健治 · 电影片场', bg: 'assets/backgrounds/kenji_director.jfif', top: 'assets/pipes/kenji_top.png', bottom: 'assets/pipes/kenji_bottom.png' }
         ];
         const BACKGROUND_IMAGES = { stage0: 'assets/backgrounds/wangwei_truck.jfif' };
@@ -748,7 +748,6 @@
                 } else if (dataMgr.selectedChar === 4) {
                     this.bird.skillActiveTimer = 5 * 60;
                 } else if (dataMgr.selectedChar === 5) {
-                    // 王雨晴不缩小，只获得 8 秒无敌
                     this.bird.invulnerableTimer = 8 * 60;
                 } else if (dataMgr.selectedChar === 6) {
                     this.bird.skillActiveTimer = 5 * 60;
@@ -764,8 +763,6 @@
                 const isKenjiAuto = (dataMgr.selectedChar === 6 && this.bird.skillActiveTimer > 0);
                 const isBailongSlow = (dataMgr.selectedChar === 4 && this.bird.skillActiveTimer > 0);
                 const isAdeMagnet = (dataMgr.selectedChar === 3 && this.bird.skillActiveTimer > 0);
-
-                // 大块头的重装体型让下坠更明显；阿德的速度在管道移动中体现。
                 const gravity = (dataMgr.selectedChar === 2) ? 0.40 : 0.32;
                 if (isKenjiAuto) {
                     this.bird.vy = 0;
@@ -860,7 +857,6 @@
 
                     const isGhostActive = (dataMgr.selectedChar === 1 && this.bird.skillActiveTimer > 0);
                     if (!p.shattered && !isGhostActive && !isKenjiAuto && this.bird.invulnerableTimer <= 0) {
-                        // 判定适当放宽：角色视觉边缘接近管道时不立即判定碰撞。
                         const hitboxRadius = Math.max(6, this.bird.radius * 0.46);
                         const hitboxLeft = this.bird.x - hitboxRadius;
                         const hitboxRight = this.bird.x + hitboxRadius;
